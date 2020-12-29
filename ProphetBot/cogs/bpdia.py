@@ -5,7 +5,11 @@ import os
 import json
 import discord
 from timeit import default_timer as timer
+
+from discord.ext.commands import Greedy
+
 from ProphetBot.constants import *
+from ProphetBot.bpdia_models import LogEntry
 from datetime import datetime
 from ProphetBot.helpers import *
 from discord.ext import commands
@@ -55,6 +59,16 @@ def get_cl(char_xp):
     return 1 + int((int(char_xp) / 1000))
 
 
+def get_targets(ctx, target_id):
+    recipients = None
+    if role := discord.utils.find(lambda m: m.id == target_id, ctx.guild.roles):
+        recipients = [member.id for member in role.members]
+    elif target_id not in user_map:
+        display_errors.append(NAME_ERROR)
+    else:
+        command_data.append(target_id)
+
+
 class BPdia(commands.Cog):
 
     def __init__(self, bot):
@@ -69,11 +83,8 @@ class BPdia(commands.Cog):
         except Exception as E:
             print(E)
             print(f'Exception: {type(E)} when trying to use service account')
-        # self.user_map = self.build_user_map()
-        # self.get_asl()
 
         print(f'Cog \'BPdia\' loaded')
-        # print(f'User Map: {self.user_map}')
 
     @commands.command(brief='- Provides a link to the public BPdia sheet')
     async def sheet(self, ctx):
@@ -218,118 +229,271 @@ class BPdia(commands.Cog):
         await ctx.message.delete()
         await ctx.channel.send("`WEEKLY RESET HAS OCCURRED.`")
 
-    @commands.command(brief='- Records an activity in the BPdia log',
-                      help=LOG_HELP)
+    @commands.group(name='log')
     @commands.check(is_tracker)
-    async def log(self, ctx, *log_args):
-        # start = timer()
-        command_data = []
-        display_errors = []
+    async def log_main(self, ctx):
+        print('Boop!')
+        print(ctx.invoked_subcommand)
+        print(ctx.subcommand_passed)
+        if ctx.invoked_subcommand is None:
+            await ctx.send(f'Error: Missing or unrecognized activity type. Please use `{ctx.prefix}help log` for more'
+                           f' information ')
+
+    @log_main.command(name='rp')
+    async def rp(self, ctx, user: discord.User):
         user_map = self.get_user_map()
-
-        print(f'{str(datetime.utcnow())} - Incoming \'Log\' command from {ctx.message.author.name}'
-              f'. Args: {log_args}')  # TODO: This should log actual time, not message time
-        log_args = list(filter(lambda a: a != '.', log_args))
-
-        # types: list of either 'int', 'str', or 'str_upper'
-        def parse_activity(*types):
-            num_args = len(types)
-            offset = 2  # First two index positions are always spoken for
-            # check for too few arguments
-            if len(log_args) < num_args + offset:
-                display_errors.append(MISSING_FIELD_ERROR)
-                return
-            elif len(log_args) > num_args + offset:
-                display_errors.append(EXTRA_FIELD_ERROR)
-                return
-
-            for i in range(num_args):
-                arg = log_args[offset + i]
-                if types[i] == 'int':
-                    try:
-                        arg = str(int(arg, 10))
-                    except ValueError:
-                        display_errors.append(NUMBER_ERROR)
-                elif types[i] == 'str':
-                    arg = str(arg)
-                elif types[i] == 'str_upper':
-                    arg = str(arg).upper()
-                else:
-                    raise Exception('Incorrect argument type in `types`')
-
-                command_data.append(arg)
-
-        if 2 <= len(log_args):
-
-            # Start off by logging the user submitting the message and the date/time
-            command_data.append(ctx.message.author.name)
-            command_data.append(str(datetime.utcnow()))
-
-            # Get the user targeted by the log command
-            target_id = re.sub(r'\D+', '', log_args[0])
-            if target_id not in user_map:
-                display_errors.append(NAME_ERROR)
-            else:
-                command_data.append(target_id)
-
-            # Get the activity type being logged
-            activity = log_args[1].upper()
-            if activity not in ACTIVITY_TYPES:  # Grabbing ACTIVITY_TYPES from constants.py
-                display_errors.append(ACTIVITY_ERROR)
-            else:
-                command_data.append(activity)
-
-            if len(display_errors) == 0:
-                # Handle RP
-                if activity in ['RP', 'MOD', 'ADMIN']:
-                    if len(log_args) > 2:
-                        display_errors.append(EXTRA_FIELD_ERROR)
-
-                # Handle PIT/ARENA
-                elif activity in ['ARENA', 'PIT']:
-                    if len(log_args) < 3 or log_args[2].upper() not in ['WIN', 'LOSS', 'HOST']:
-                        display_errors.append(RESULT_ERROR)
-                    else:
-                        parse_activity('str_upper')
-
-                # Handle SHOP/SHOPKEEP
-                # To-Do: Deprecate 'SHOPKEEP'. Nobody uses it.
-                elif activity in ['SHOP', 'SHOPKEEP']:
-                    parse_activity('int')
-
-                # Handle BUY/SELL
-                elif activity in ['BUY', 'SELL']:
-                    parse_activity('str', 'int')
-
-                # Handle QUEST/ACTIVITY/ADVENTURE, as well as BONUS/GLOBAL
-                elif activity in ['QUEST', 'ACTIVITY', 'ADVENTURE', 'BONUS', 'GLOBAL']:
-                    parse_activity('str', 'int', 'int')
-
-                else:
-                    display_errors.append('How did you even get here?')
+        if user.id not in user_map.keys():
+            # TODO: Probably want some more specific error handling here. One error class for the whole group?
+            await ctx.send(NAME_ERROR)
         else:
-            display_errors.append('Error: There must be 2-5 fields entered.')
+            entry = LogEntry(author=ctx.message.author.name, time=datetime.utcnow(), target_user=user.id, activity='RP',
+                             cl=get_cl(user_map[user.id]), asl=self.get_asl())
+            self.log_sheet.append_row(entry.format_as_list(), value_input_option='USER_ENTERED',
+                                      insert_data_option='INSERT_ROWS', table_range='A2')
 
-        if len(display_errors) == 0:
-            while len(command_data) < 7:
-                command_data.append('')  # Pad until CL and ASL
-            target_id = re.sub(r'\D+', '', log_args[0])
-            command_data.append(get_cl(user_map[target_id]))  # Because the sheet formatting has to be a little extra
-            command_data.append(self.get_asl())
-            print(f'DATA: {command_data}')
-            # flat_data = flatten(command_data)
-            try:
-                self.log_sheet.append_row(command_data, value_input_option='USER_ENTERED',
-                                          insert_data_option='INSERT_ROWS', table_range='A2')
-            except Exception as E:
-                print(f'Exception: {E}')
-            # stop = timer()
-            # print(f'Elapsed time: {stop - start}')
-            await ctx.message.channel.send(f'{log_args} - log_alt submitted by {ctx.author.nick}')
+            await ctx.send(f'{user.mention}: RP - log submitted by {ctx.author.nick}')
             await ctx.message.delete()
+
+    @rp.error
+    async def rp_error(self, ctx, error):
+        await self.log_error(ctx, error)
+
+    @log_main.command()
+    async def rp_multi(self, ctx, users: Greedy[discord.User]):
+        user_map = self.get_user_map()
+        for user in users:
+            if user.id not in user_map:
+                # TODO: Probably want some more specific error handling here. One error class for the whole group?
+                await ctx.message.send(NAME_ERROR)
+            else:
+                entry = LogEntry(author=ctx.message.author, time=datetime.utcnow(), target_user=user.id, activity='RP',
+                                 cl=get_cl(user_map[user.id]), asl=self.get_asl())
+                self.log_sheet.append_row(entry.format_as_list(), value_input_option='USER_ENTERED',
+                                          insert_data_option='INSERT_ROWS', table_range='A2')
+
+                await ctx.message.channel.send(f'{user.mention}: RP - log submitted by {ctx.author.nick}')
+            await ctx.message.delete()
+
+    @log_main.command()
+    async def arena(self, ctx, user: discord.User, result: str):
+        user_map = self.get_user_map()
+        if user.id not in user_map:
+            # TODO: Probably want some more specific error handling here. One error class for the whole group?
+            await ctx.message.send(NAME_ERROR)
         else:
-            for error in display_errors:
-                await ctx.message.channel.send(error)
+            if result.upper() not in ['WIN', 'LOSS', 'HOST']:
+                await ctx.message.send(RESULT_ERROR)
+            else:
+                entry = LogEntry(author=ctx.message.author, time=datetime.utcnow(), target_user=user.id,
+                                 activity='ARENA', outcome=result, cl=get_cl(user_map[user.id]), asl=self.get_asl())
+                self.log_sheet.append_row(entry.format_as_list(), value_input_option='USER_ENTERED',
+                                          insert_data_option='INSERT_ROWS', table_range='A2')
+
+                await ctx.message.channel.send(f'{user.mention}: Arena {result.upper()} - log submitted by '
+                                               f'{ctx.author.nick}')
+                await ctx.message.delete()
+
+    @log_main.command()
+    async def pit(self, ctx, user: discord.User, result: str):
+        user_map = self.get_user_map()
+        if user.id not in user_map:
+            # TODO: Probably want some more specific error handling here. One error class for the whole group?
+            await ctx.message.send(NAME_ERROR)
+        else:
+            if result.upper() not in ['WIN', 'LOSS']:
+                await ctx.message.send(RESULT_ERROR)
+            else:
+                entry = LogEntry(author=ctx.message.author, time=datetime.utcnow(), target_user=user.id, activity='PIT',
+                                 outcome=result, cl=get_cl(user_map[user.id]), asl=self.get_asl())
+                self.log_sheet.append_row(entry.format_as_list(), value_input_option='USER_ENTERED',
+                                          insert_data_option='INSERT_ROWS', table_range='A2')
+
+                await ctx.message.channel.send(f'{user.mention}: Pit {result.upper()} - log submitted by '
+                                               f'{ctx.author.nick}')
+                await ctx.message.delete()
+
+    @log_main.command(aliases=['SHOPKEEP'])
+    async def shop(self, ctx, user: discord.User, gold: int):
+        user_map = self.get_user_map()
+        if user.id not in user_map:
+            # TODO: Probably want some more specific error handling here. One error class for the whole group?
+            await ctx.message.send(NAME_ERROR)
+        else:
+            entry = LogEntry(author=ctx.message.author, time=datetime.utcnow(), target_user=user.id, activity='SHOP',
+                             outcome=gold, cl=get_cl(user_map[user.id]), asl=self.get_asl())
+            self.log_sheet.append_row(entry.format_as_list(), value_input_option='USER_ENTERED',
+                                      insert_data_option='INSERT_ROWS', table_range='A2')
+
+            await ctx.message.channel.send(f'{user.mention}: Shop {gold}gp - log submitted by ' f'{ctx.author.nick}')
+            await ctx.message.delete()
+
+    @log_main.command(aliases=['SELL'])
+    async def buy(self, ctx, user: discord.User, purchase_text: str, gold: int):
+        user_map = self.get_user_map()
+        something = [x.upper for x in ctx.command.qualified_name]
+        activity = 'SELL' if 'SELL' in something else 'BUY'
+        if user.id not in user_map:
+            # TODO: Probably want some more specific error handling here. One error class for the whole group?
+            await ctx.message.send(NAME_ERROR)
+        else:
+            entry = LogEntry(author=ctx.message.author, time=datetime.utcnow(), target_user=user.id,
+                             activity=activity, outcome=purchase_text, gp=gold, cl=get_cl(user_map[user.id]),
+                             asl=self.get_asl())
+            self.log_sheet.append_row(entry.format_as_list(), value_input_option='USER_ENTERED',
+                                      insert_data_option='INSERT_ROWS', table_range='A2')
+
+            await ctx.message.channel.send(f'{user.mention}: {activity} \"{purchase_text}\" {gold}gp '
+                                           f'- log submitted by ' f'{ctx.author.nick}')
+            await ctx.message.delete()
+
+    @log_main.command()
+    async def bonus(self, ctx, user: discord.User, reason: str, gold: int, xp: int):
+        user_map = self.get_user_map()
+        if user.id not in user_map:
+            # TODO: Probably want some more specific error handling here. One error class for the whole group?
+            await ctx.message.send(NAME_ERROR)
+        else:
+            entry = LogEntry(author=ctx.message.author, time=str(datetime.utcnow()), target_user=user.id,
+                             activity='BONUS', outcome=reason, gp=gold, xp=xp, cl=get_cl(user_map[user.id]),
+                             asl=self.get_asl())
+            self.log_sheet.append_row(entry.format_as_list(), value_input_option='USER_ENTERED',
+                                      insert_data_option='INSERT_ROWS', table_range='A2')
+
+            await ctx.message.channel.send(f'{user.mention}: BONUS \"{reason}\" {gold}gp, {xp}xp '
+                                           f'- log submitted by ' f'{ctx.author.nick}')
+            await ctx.message.delete()
+
+    @log_main.error
+    async def log_error(self, ctx, error):
+        if isinstance(error, commands.TooManyArguments):
+            await ctx.send('Error: Too many arguments for log type')
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(f'Error: Missing required argument {error.param}')
+        elif isinstance(error, commands.ConversionError):
+            await ctx.send(f'Error: Failed to convert argument {error.original} into the proper type')
+        elif isinstance(error, commands.CheckFailure):
+            await ctx.send('Naughty Naughty ' + ctx.message.author.name)
+        return
+
+    # @commands.command(brief='- Records an activity in the BPdia log',
+    #                   help=LOG_HELP)
+    # @commands.check(is_tracker)
+    # async def log(self, ctx, *log_args):
+    #     # start = timer()
+    #     command_data = []
+    #     display_errors = []
+    #     activity_log = LogEntry()
+    #     user_map = self.get_user_map()
+    #
+    #     print(f'{str(datetime.utcnow())} - Incoming \'Log\' command from {ctx.message.author.name}'
+    #           f'. Args: {log_args}')  # TODO: This should log actual time, not message time
+    #
+    #     # log_args = list(filter(lambda a: a != '.', log_args))
+    #
+    #     # types: list of either 'int', 'str', or 'str_upper'
+    #     def parse_activity(*types):
+    #         num_args = len(types)
+    #         offset = 2  # First two index positions are always spoken for
+    #         # check for too few arguments
+    #         if len(log_args) < num_args + offset:
+    #             display_errors.append(MISSING_FIELD_ERROR)
+    #             return
+    #         elif len(log_args) > num_args + offset:
+    #             display_errors.append(EXTRA_FIELD_ERROR)
+    #             return
+    #
+    #         for i in range(num_args):
+    #             arg = log_args[offset + i]
+    #             if types[i] == 'int':
+    #                 try:
+    #                     arg = str(int(arg, 10))
+    #                 except ValueError:
+    #                     display_errors.append(NUMBER_ERROR)
+    #             elif types[i] == 'str':
+    #                 arg = str(arg)
+    #             elif types[i] == 'str_upper':
+    #                 arg = str(arg).upper()
+    #             else:
+    #                 raise Exception('Incorrect argument type in `types`')
+    #
+    #             command_data.append(arg)
+    #
+    #     if 2 <= len(log_args):
+    #
+    #         # Start off by logging the user submitting the message and the date/time
+    #         activity_log.author = ctx.message.author.name
+    #         # command_data.append(ctx.message.author.name)
+    #         activity_log.time = str(datetime.utcnow())
+    #         # command_data.append(str(datetime.utcnow()))
+    #
+    #         # Get the user targeted by the log command
+    #         target_id = re.sub(r'\D+', '', log_args[0])
+    #         if role := discord.utils.find(lambda m: m.id == target_id, ctx.guild.roles):
+    #             recipients = [member.id for member in role.members]
+    #         elif target_id not in user_map:
+    #             display_errors.append(NAME_ERROR)
+    #         else:
+    #             command_data.append(target_id)
+    #
+    #         # Get the activity type being logged
+    #         activity = log_args[1].upper()
+    #         if activity not in ACTIVITY_TYPES:  # Grabbing ACTIVITY_TYPES from constants.py
+    #             display_errors.append(ACTIVITY_ERROR)
+    #         else:
+    #             activity_log.activity = activity
+    #             # command_data.append(activity)
+    #
+    #         if len(display_errors) == 0:
+    #             # Handle RP
+    #             if activity in ['RP', 'MOD', 'ADMIN']:
+    #                 if len(log_args) > 2:
+    #                     display_errors.append(EXTRA_FIELD_ERROR)
+    #
+    #             # Handle PIT/ARENA
+    #             elif activity in ['ARENA', 'PIT']:
+    #                 if len(log_args) < 3 or log_args[2].upper() not in ['WIN', 'LOSS', 'HOST']:
+    #                     display_errors.append(RESULT_ERROR)
+    #                 else:
+    #                     parse_activity('str_upper')
+    #
+    #             # Handle SHOP/SHOPKEEP
+    #             # To-Do: Deprecate 'SHOPKEEP'. Nobody uses it.
+    #             elif activity in ['SHOP', 'SHOPKEEP']:
+    #                 parse_activity('int')
+    #
+    #             # Handle BUY/SELL
+    #             elif activity in ['BUY', 'SELL']:
+    #                 parse_activity('str', 'int')
+    #
+    #             # Handle QUEST/ACTIVITY/ADVENTURE, as well as BONUS/GLOBAL
+    #             elif activity in ['QUEST', 'ACTIVITY', 'ADVENTURE', 'BONUS', 'GLOBAL']:
+    #                 parse_activity('str', 'int', 'int')
+    #
+    #             else:
+    #                 display_errors.append('How did you even get here?')
+    #     else:
+    #         display_errors.append('Error: There must be 2-5 fields entered.')
+    #
+    #     if len(display_errors) == 0:
+    #         while len(command_data) < 7:
+    #             command_data.append('')  # Pad until CL and ASL
+    #         target_id = re.sub(r'\D+', '', log_args[0])
+    #         command_data.append(get_cl(user_map[target_id]))
+    #         command_data.append(self.get_asl())
+    #         print(f'DATA: {command_data}')
+    #         # flat_data = flatten(command_data)
+    #         try:
+    #             self.log_sheet.append_row(command_data, value_input_option='USER_ENTERED',
+    #                                       insert_data_option='INSERT_ROWS', table_range='A2')
+    #         except Exception as E:
+    #             print(f'Exception: {E}')
+    #         # stop = timer()
+    #         # print(f'Elapsed time: {stop - start}')
+    #         await ctx.message.channel.send(f'{log_args} - log_alt submitted by {ctx.author.nick}')
+    #         await ctx.message.delete()
+    #     else:
+    #         for error in display_errors:
+    #             await ctx.message.channel.send(error)
 
     @commands.command(brief='- Alias for logging a RP', aliases=ACTIVITY_TYPES,
                       help=LOG_ALIAS_HELP)
@@ -337,6 +501,8 @@ class BPdia(commands.Cog):
     async def log_alias(self, ctx, *args):
         msg = str(ctx.message.content).split()
         activity = msg[0][1:]
+        # test = getattr(self.log_main, 'Shrug')
+        # test(ctx, *args)
 
         print(f'{str(datetime.utcnow())} - Incoming \'{activity}\' command from {ctx.message.author.name}'
               f'. Args: {args}')  # TODO: This should log actual time, not message time
@@ -359,16 +525,18 @@ class BPdia(commands.Cog):
 
         data[0] = re.sub(r'\D+', '', data[0])
         data.extend(['', '', 0])
-        initial_log_data = ['Blind Prophet', str(datetime.utcnow()), str(data[0]), 'BONUS', 'Initial',
-                            0, 0, 1, int(self.get_asl())]
+        initial_entry = LogEntry(author='Blind Prophet', time=datetime.utcnow(), target_user=data[0], activity='BONUS',
+                                 outcome='Initial', gp=0, xp=0, cl=1, asl=self.get_asl())
+        # initial_log_data = ['Blind Prophet', str(datetime.utcnow()), str(data[0]), 'BONUS', 'Initial',
+        #                     0, 0, 1, int(self.get_asl())]
 
         self.char_sheet.append_row(data, value_input_option='USER_ENTERED',
                                    insert_data_option='INSERT_ROWS', table_range='A2')
-        self.log_sheet.append_row(initial_log_data, insert_data_option='INSERT_ROWS',
+        self.log_sheet.append_row(initial_entry.format_as_list(), insert_data_option='INSERT_ROWS',
                                   value_input_option='USER_ENTERED', table_range='A2')
 
-        await ctx.message.delete()
         await ctx.message.channel.send(f'{data} - create submitted by {ctx.author.nick}')
+        await ctx.message.delete()
 
     # --------------------------- #
     # Helper functions
@@ -390,5 +558,5 @@ class BPdia(commands.Cog):
             print(E)
 
         return {  # Using fancy dictionary comprehension to make the dict
-            str(key[0]): int(value[0]) for key, value in zip(results[0], results[1])
+            int(key[0]): int(value[0]) for key, value in zip(results[0], results[1])
         }
