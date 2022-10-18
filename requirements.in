@@ -1,4 +1,4 @@
-py-cord>=2.0.0b7
+py-cord
 gspread
 aiopg
 aiopg[sa]
