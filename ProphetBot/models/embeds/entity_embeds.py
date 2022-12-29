@@ -48,11 +48,15 @@ class CharacterGetEmbed(Embed):
                        inline=False)
 
         if character.get_level() < 3:
+            pretty_completed_rps = character.completed_rps \
+                if character.completed_rps <= character.needed_rps else character.needed_rps
+            pretty_completed_arenas = character.completed_arenas \
+                if character.completed_arenas <= character.needed_arenas else character.needed_arenas
             self.add_field(name="First Steps Quests:",
                            value=f"\u200b \u200b \u200b Level {character.get_level()} RPs: "
-                                 f"{character.completed_rps}/{character.needed_rps}\n"
+                                 f"{pretty_completed_rps}/{character.needed_rps}\n"
                                  f"\u200b \u200b \u200b Level {character.get_level()} Arenas: "
-                                 f"{character.completed_arenas}/{character.needed_arenas}")
+                                 f"{pretty_completed_arenas}/{character.needed_arenas}")
 
 
 class HxLogEmbed(Embed):
