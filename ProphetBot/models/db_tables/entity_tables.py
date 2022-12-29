@@ -27,6 +27,7 @@ guilds_table = sa.Table(
     Column("weeks", Integer, nullable=False, default=0),
     Column("week_xp", Integer, nullable=False, default=0),
     Column("max_reroll", Integer, nullable=False, default=1),
+    Column("xp_adjust", Integer, nullable=False, default=1),
     Column("reset_day", Integer, nullable=True),
     Column("reset_hour", Integer, nullable=True),
     Column("last_reset", DateTime(timezone=False), nullable=False, default=datetime.utcnow())

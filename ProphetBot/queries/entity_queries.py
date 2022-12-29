@@ -27,6 +27,7 @@ def insert_new_guild(guild: PlayerGuild):
         server_xp=guild.server_xp,
         weeks=guild.weeks,
         max_reroll=guild.max_reroll,
+        xp_adjust=guild.xp_adjust
     ).returning(guilds_table)
 
 
@@ -38,6 +39,7 @@ def update_guild(guild: PlayerGuild):
         server_xp=guild.server_xp,
         weeks=guild.weeks,
         week_xp=guild.week_xp,
+        xp_adjust=guild.xp_adjust,
         reset_day=None if not hasattr(guild, "reset_day") else guild.reset_day,
         reset_hour=None if not hasattr(guild, "reset_hour") else guild.reset_hour,
         last_reset=guild.last_reset

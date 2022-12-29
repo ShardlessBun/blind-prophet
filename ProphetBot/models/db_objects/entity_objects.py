@@ -65,6 +65,7 @@ class PlayerGuild(object):
     server_xp: int
     weeks: int
     week_xp: int
+    xp_adjust: int
     max_reroll: int
 
     def __init__(self, **kwargs):

@@ -7,7 +7,6 @@ from statistics import mean
 import aiopg
 import discord
 from discord import ApplicationContext, Member, Role, Bot, Client
-from texttable import Texttable
 
 from ProphetBot.compendium import Compendium
 from ProphetBot.models.db_objects import PlayerGuild, PlayerCharacter, Adventure, Arena, Shop
@@ -32,7 +31,7 @@ async def get_or_create_guild(db: aiopg.sa.Engine, guild_id: int) -> PlayerGuild
         g_row = await results.first()
 
     if g_row is None:
-        g = PlayerGuild(id=guild_id, max_level=3, server_xp=0, weeks=0, week_xp=0, max_reroll=1)
+        g = PlayerGuild(id=guild_id, max_level=3, server_xp=0, weeks=0, week_xp=0, max_reroll=1, xp_adjust=1)
 
         async with db.acquire() as conn:
             results = await conn.execute(insert_new_guild(g))

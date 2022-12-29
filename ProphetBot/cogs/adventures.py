@@ -373,7 +373,7 @@ class Adventures(commands.Cog):
             return await ctx.respond(f"Error: No adventure associated with this channel")
         elif adventure is None:
             return await ctx.respond(f"Error: No adventure found for {role.mention}.")
-        elif ctx.author.id not in adventure.dms:
+        elif ctx.author.id not in adventure.dms and not is_admin(ctx):
             return await ctx.respond(f"Error: You are not a DM of this adventure")
         else:
             adventure_role = adventure.get_adventure_role(ctx)

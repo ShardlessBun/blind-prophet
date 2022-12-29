@@ -193,7 +193,7 @@ class AdventureStatusEmbed(Embed):
         super().__init__(
             title=f"Adventure Status - {adventure.name}",
             description=f"**Adventure Role:** {adventure.get_adventure_role(ctx).mention}\n"
-                        f"**Adventure Tier:** {adventure.tier}\n"
+                        f"**Adventure Tier:** {adventure.tier.id}\n"
                         f"**EP Earned to date:** {adventure.ep}\n",
             color=Color.random()
         )
@@ -254,7 +254,8 @@ class GuildEmbed(Embed):
 
         self.add_field(name="**Settings**",
                        value=f"**Max Level:** {g.max_level}\n"
-                             f"**Max Rerolls:** {g.max_reroll}",
+                             f"**Max Rerolls:** {g.max_reroll}\n"
+                             f"**XP Adjust:** {g.xp_adjust}",
                        inline=False)
 
         if g.reset_hour is not None:
@@ -271,11 +272,17 @@ class GuildStatus(Embed):
                          description=f"**Max Level:** {g.max_level}\n"
                                      f"**Server XP:** {g.server_xp}\n"
                                      f"**Week XP:** {g.week_xp}\n"
-                                     f"**# Weeks:** {g.weeks}")
+                                     f"**Total XP:** {g.server_xp + g.week_xp}\n"
+                                     f"**# Weeks:** {g.weeks}\n")
 
         self.set_thumbnail(url=THUMBNAIL)
 
         in_count = 0 if inactive is None else len(inactive)
+        xp_goal = g.max_level + 1 * (total - in_count) * g.xp_adjust
+        xp_percent = round((g.week_xp + g.server_xp) / xp_goal,2) * 100
+
+        self.description +=f"\n **XP Goal: ** {xp_goal} (*{xp_percent}%*)\n" \
+                           f"**XP Adjust:** {g.xp_adjust}\n"
 
         self.description += f"\n**Total Characters:** {total}\n" \
                             f"**Inactive Characters:** {in_count}\n" \

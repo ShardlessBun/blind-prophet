@@ -66,6 +66,7 @@ class GuildSchema(Schema):
     weeks = fields.Integer(data_key="weeks", required=True)
     week_xp = fields.Integer(data_key="week_xp", required=True)
     max_reroll = fields.Integer(data_key="max_reroll", required=True)
+    xp_adjust = fields.Integer(data_key="xp_adjust", required=True)
     reset_day = fields.Integer(data_key="reset_day", required=False, allow_none=True)
     reset_hour = fields.Integer(data_key="reset_hour", required=False, allow_none=True)
     last_reset = fields.Method(None, "load_timestamp")

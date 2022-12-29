@@ -8,10 +8,11 @@ from discord.ext import commands, tasks
 from ProphetBot.bot import BpBot
 from ProphetBot.constants import DASHBOARD_REFRESH_INTERVAL
 from ProphetBot.helpers import get_dashboard_from_category_channel_id, get_last_message
-from ProphetBot.models.db_objects import RefCategoryDashboard, DashboardType, Shop
-from ProphetBot.models.embeds import ErrorEmbed, RpDashboardEmbed, ShopDashboardEmbed
-from ProphetBot.models.schemas import RefCategoryDashboardSchema, ShopSchema
-from ProphetBot.queries import insert_new_dashboard, get_dashboards, delete_dashboard, update_dashboard, get_shops
+from ProphetBot.models.db_objects import RefCategoryDashboard, DashboardType, Shop, Adventure
+from ProphetBot.models.embeds import ErrorEmbed, RpDashboardEmbed, ShopDashboardEmbed, AdventureDashboardEmbed
+from ProphetBot.models.schemas import RefCategoryDashboardSchema, ShopSchema, AdventureSchema
+from ProphetBot.queries import insert_new_dashboard, get_dashboards, delete_dashboard, update_dashboard, get_shops, \
+    get_adventure_by_guild
 from timeit import default_timer as timer
 
 log = logging.getLogger(__name__)
@@ -126,6 +127,38 @@ class Dashboards(commands.Cog):
         await self.update_dashboard(dashboard)
 
     @dashboard_commands.command(
+        name="adventure_create",
+        description="Creates a dashboard showing active adventures"
+    )
+    async def dashboard_adventure_create(self, ctx: ApplicationContext):
+        await ctx.defer()
+
+        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx)
+
+        if dashboard is not None:
+            return await ctx.respond(embed=ErrorEmbed(description="There is already a dashboard for this category. "
+                                                                  "Delete that before creating another"),
+                                     ephemeral=True)
+
+        # Create post with dummy text in it
+        interaction = await ctx.respond("Fetching dashboard data. This may take a moment")
+        msg: Message = await ctx.channel.fetch_message(interaction.id)
+        await msg.pin(reason=f"Shop dashboard created by {ctx.author.name}")
+
+        dType = ctx.bot.compendium.get_object("c_dashboard_type", "ADVENTURE")
+
+        dashboard = RefCategoryDashboard(category_channel_id=ctx.channel.category.id,
+                                         dashboard_post_channel_id=ctx.channel_id,
+                                         dashboard_post_id=msg.id,
+                                         excluded_channel_ids=[],
+                                         dashboard_type=dType.id)
+
+        async with ctx.bot.db.acquire() as conn:
+            await conn.execute(insert_new_dashboard(dashboard))
+
+        await self.update_dashboard(dashboard)
+
+    @dashboard_commands.command(
         name="rp_exclude",
         description="Add a channel to the exclusions list"
     )
@@ -207,6 +240,37 @@ class Dashboards(commands.Cog):
                         shop_dict[shop.type.value].append(shop)
 
             return await original_message.edit(content='', embed=ShopDashboardEmbed(g, shop_dict))
+
+        elif dType is not None and dType.value.upper() == "ADVENTURE":
+            adventures = {}
+            g: discord.Guild = dashboard.get_category_channel(self.bot).guild
+
+            adventures[1] = []
+            adventures[2] = []
+            adventures[3] = []
+            adventures[4] = []
+            async with self.bot.db.acquire() as conn:
+                async for row in conn.execute(get_adventure_by_guild(g.id)):
+                    adventure: Adventure = AdventureSchema(self.bot.compendium).load(row)
+                    a_dict = {
+                        "adventure": adventure,
+                        "dms": [],
+                        "players": []}
+                    adventures[adventure.tier.id].append(a_dict)
+
+            for tier in adventures.keys():
+                for a in adventures[tier]:
+                    adventure = a["adventure"]
+                    members = discord.utils.get(g.roles, id=adventure.role_id).members
+
+                    if len(members) > 0:
+                        for p in members:
+                            if p.id in adventure.dms:
+                                a["dms"].append(p)
+                            else:
+                                a["players"].append(p)
+
+            return await original_message.edit(content='', embed=AdventureDashboardEmbed(g, adventures))
 
     # --------------------------- #
     # Tasks
