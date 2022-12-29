@@ -75,24 +75,26 @@ class AdventureDashboardEmbed(Embed):
         if len(adventures) == 0:
             self.add_field(name="No Adventures")
         else:
-            for a in adventures["adventures"]:
-                adventure = a["adventure"]
-                name_string = f"{adventure.name}"
-                dm_string = ", ".join([f"{p.mention}" for p in a["dms"]])
+            for tier in adventures.keys():
+                value_string = ""
+                if len(adventures[tier]) > 0:
+                    for a in adventures[tier]:
+                        adventure = a["adventure"]
+                        dm_string = ", ".join([f"{p.mention}" for p in a["dms"]])
 
-                value_string = f"DMs: {dm_string}\n" \
-                               f"Role: {g.get_role(adventure.role_id).mention}\n" \
-                               f"Tier: {adventure.tier.id} " \
-                               f"EP: {adventure.ep}\n" \
-                               f"Players: \n"
+                        a_string = f"**{adventure.name}** - *DM: {dm_string}*\n" \
+                                   f"Role: {g.get_role(adventure.role_id).mention}\n" \
+                                   f"Players: \n"
 
-                value_string += "\n".join([f"\u200b {p.mention}" for p in a["players"]])
+                        a_string += "\n".join([f"\u200b - {p.mention}" for p in a["players"]])
 
-                self.add_field(
-                    name=name_string,
-                    value=value_string,
-                    inline=False
-                )
+                        value_string += a_string + "\n\n"
+
+                    self.add_field(
+                        name=f"**Tier {tier} Adventures**",
+                        value=value_string
+                    )
+
 
 
 class GlobalEmbed(Embed):

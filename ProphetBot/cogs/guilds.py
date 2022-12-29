@@ -244,6 +244,24 @@ class Guilds(commands.Cog):
         await ctx.respond(embed=GuildEmbed(ctx, g))
 
     @guilds_commands.command(
+        name="set_xp_adjust",
+        description="Set the xp adjustment used in target xp. {max_level} + 1 * active players * xp_adjust"
+    )
+    async def guild_xp_adjust(self, ctx: ApplicationContext,
+                              adjustment: Option(int, description="XP Adjustment", required=True)):
+        await ctx.defer()
+
+        g: PlayerGuild = await get_or_create_guild(ctx.bot.db, ctx.guild_id)
+
+        g.xp_adjust = adjustment
+
+        async with ctx.bot.db.acquire() as conn:
+            await conn.execute(update_guild(g))
+
+        return await ctx.respond(embed=GuildEmbed(ctx, g))
+
+
+    @guilds_commands.command(
         name="weekly_reset",
         description="Performs a weekly reset for the server"
     )
