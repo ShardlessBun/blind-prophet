@@ -166,6 +166,7 @@ class Shop(object):
     mastery: int
     seeks_remaining: int
     max_cost: int | None
+    seek_roll: str | None
     active: bool
 
     def __init__(self, **kwargs):

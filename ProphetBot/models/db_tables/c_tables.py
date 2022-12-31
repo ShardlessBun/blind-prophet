@@ -8,7 +8,8 @@ c_rarity_table = sa.Table(
     metadata,
     Column("id", Integer, primary_key=True, autoincrement='auto'),
     Column("value", String, nullable=False),
-    Column("abbreviation", sa.ARRAY(String), nullable=True)
+    Column("abbreviation", sa.ARRAY(String), nullable=True),
+    Column("seek_dc", Integer, nullable=False)
 )
 
 c_blacksmith_type_table = sa.Table(

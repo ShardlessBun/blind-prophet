@@ -82,3 +82,6 @@ async def global_mod_autocomplete(ctx: discord.AutocompleteContext):
 
 async def global_host_autocomplete(ctx: discord.AutocompleteContext):
     return list(ctx.bot.compendium.c_host_status[1].keys())
+
+async def rarity_autocomplete(ctx: discord.AutocompleteContext):
+    return list(ctx.bot.compendium.c_rarity[1].keys())

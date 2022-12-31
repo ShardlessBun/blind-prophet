@@ -3,7 +3,7 @@ from discord import ApplicationContext, Role
 
 
 class Rarity(object):
-    def __init__(self, id, value, abbreviation):
+    def __init__(self, id, value, abbreviation, seek_dc):
         """
         :param id: int
         :param value: str
@@ -13,6 +13,7 @@ class Rarity(object):
         self.id = id
         self.value = value
         self.abbreviation = abbreviation
+        self.seek_dc = seek_dc
 
 
 class BlacksmithType(object):

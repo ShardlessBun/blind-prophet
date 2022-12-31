@@ -466,7 +466,6 @@ class Adventures(commands.Cog):
             await ctx.channel.edit(name=room_name)
             await ctx.respond(f"Room name changed to {ctx.channel.mention}")
 
-    # TODO: Allow for posting options as well 'Open view', 'Close view', 'Open post', 'Close post', 'Open all', 'Close all'
     @room_commands.command(
         name="view",
         description="Open or close a channel for public viewing"
