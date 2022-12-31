@@ -473,7 +473,9 @@ class Adventures(commands.Cog):
     )
     async def room_open(self, ctx: ApplicationContext,
                         view: Option(str, description="Open or close the room", choices=['open', 'close'],
-                                     required=True)):
+                                     required=True),
+                        allow_post: Option(bool, description="Whether to allow public posts", required=False,
+                                           default=False)):
         await ctx.defer()
 
         adventure: Adventure = await get_adventure(ctx.bot, ctx.channel.category_id)
@@ -486,10 +488,15 @@ class Adventures(commands.Cog):
             overwrites = ctx.channel.overwrites
             room_view = True if view.lower() == "open" else False
             if quester_role := discord.utils.get(ctx.guild.roles, name="Quester"):
-                overwrites[quester_role] = discord.PermissionOverwrite(view_channel=room_view)
+                overwrites[quester_role] = discord.PermissionOverwrite(view_channel=room_view,
+                                                                       send_messages=allow_post)
                 await ctx.channel.edit(overwrites=overwrites)
                 val = "closed" if view == "close" else "open"
-                await ctx.respond(f"{ctx.channel.mention} is now {val} to the {quester_role.mention} role")
+                if allow_post:
+                    await ctx.respond(f"{ctx.channel.mention} is now {val} and able to be posted in by the "
+                                      f"{quester_role.mention} role")
+                else:
+                    await ctx.respond(f"{ctx.channel.mention} is now {val} to the {quester_role.mention} role")
             else:
                 await ctx.respond("Couldn't find the @Quester role")
 
