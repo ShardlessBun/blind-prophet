@@ -173,6 +173,7 @@ class ShopSchema(Schema):
     mastery = fields.Integer(data_key="mastery", required=True)
     seeks_remaining = fields.Integer(data_key="seeks_remaining", required=True)
     max_cost = fields.Integer(data_key="max_cost", required=False, default=None, allow_none=True)
+    seek_roll = fields.String(data_key="seek_roll", reqquired=False, default=None, allow_none=True)
     active = fields.Boolean(data_key="active", required=True)
 
     def __init__(self, compendium, **kwargs):

@@ -104,6 +104,7 @@ wheel==0.37.1
     # via pip-tools
 yarl==1.8.1
     # via aiohttp
+d20
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

@@ -1,6 +1,7 @@
 import logging
 import random
 
+import d20
 import discord
 from discord import SlashCommandGroup, ApplicationContext, Member, Option, TextChannel, CategoryChannel
 from discord.ext import commands
@@ -8,9 +9,9 @@ from texttable import Texttable
 
 from ProphetBot.bot import BpBot
 from ProphetBot.helpers import get_or_create_guild, sort_stock, \
-    shop_create_type_autocomplete, get_shop, upgrade_autocomplete, roll_stock, paginate
+    shop_create_type_autocomplete, get_shop, upgrade_autocomplete, roll_stock, paginate, rarity_autocomplete
 from ProphetBot.models.db_objects import PlayerGuild, Shop
-from ProphetBot.models.embeds import ErrorEmbed, NewShopEmbed, ShopEmbed
+from ProphetBot.models.embeds import ErrorEmbed, NewShopEmbed, ShopEmbed, ShopSeekEmbed
 from ProphetBot.queries import insert_new_shop, update_shop
 
 log = logging.getLogger(__name__)
@@ -183,6 +184,9 @@ class Shops(commands.Cog):
         description="Log a seek, or set number of seeks available"
     )
     async def shop_seek(self, ctx: ApplicationContext,
+                        rarity: Option(str, description="Seek item rarity", required=False,
+                                       autocomplete=rarity_autocomplete),
+                        phrase: Option(str, description="Flavor text for the roll", required=False),
                         num_seeks: Option(int, description="Number of seeks available", required=False,
                                           min_value=0)):
         await ctx.defer()
@@ -198,16 +202,26 @@ class Shops(commands.Cog):
                                                                   f"Consider upgrades."), ephemeral=True)
         elif num_seeks is not None:
             shop.seeks_remaining = num_seeks
+            await ctx.respond(f'{shop.seeks_remaining} of {shop.network + 1} seeks remaining.')
         elif shop.seeks_remaining == 0:
-            return await ctx.respond(embed=ErrorEmbed(description=f"Can't have a negative number of seeks remaining"),
+            return await ctx.respond(embed=ErrorEmbed(description=f"No more seeks remaining."),
                                      ephemeral=True)
         else:
-            shop.seeks_remaining -= 1
+            if shop.seek_roll is None:
+                return await ctx.respond(embed=ErrorEmbed(description=f"No seek roll defined. "
+                                                                      f"Please run `/shop set_seek_roll` first"),
+                                         ephemeral=True)
+            else:
+                item_r = ctx.bot.compendium.get_object("c_rarity", rarity)
+                dc = None if item_r is None else item_r.seek_dc
+                roll = d20.roll(shop.seek_roll)
+                shop.seeks_remaining -= 1
+                await ctx.respond(embed=ShopSeekEmbed(shop, roll, dc, phrase))
 
         async with self.bot.db.acquire() as conn:
             await conn.execute(update_shop(shop))
 
-        return await ctx.respond(f'{shop.seeks_remaining} of {shop.network + 1} seeks remaining.')
+
 
     @shop_commands.command(
         name="info",
@@ -223,10 +237,40 @@ class Shops(commands.Cog):
         shop: Shop = await get_shop(ctx.bot, None, None, channel.id)
 
         if shop is None:
+            shop: Shop = await get_shop(ctx.bot, ctx.author.id, ctx.guild_id, None)
+
+        if shop is None:
             return await ctx.respond(embed=ErrorEmbed(description=f"No shop found."),
                                      ephemeral=True)
 
         return await ctx.respond(embed=ShopEmbed(ctx, shop))
+
+    @shop_commands.command(
+        name="set_seek_roll",
+        description="Set the seek roll for a shop"
+    )
+    async def shop_seek_roll(self, ctx: ApplicationContext,
+                             roll: Option(str, description="Roll string for the shop", required=True)):
+        await ctx.defer()
+
+        shop: Shop = await get_shop(ctx.bot, ctx.author.id, ctx.guild_id)
+
+        if shop is None:
+            return await ctx.respond(embed=ErrorEmbed(description=f"No shop found owned by {ctx.author.mention}"),
+                                     ephemeral=True)
+
+        try:
+            d20.roll(roll)
+        except:
+            return await ctx.respond(embed=ErrorEmbed(description=f"Roll string `{roll}` is not valid"), ephemeral=True)
+
+        shop.seek_roll = roll
+
+        async with self.bot.db.acquire() as conn:
+            await conn.execute(update_shop(shop))
+
+        return await ctx.respond(embed=ShopEmbed(ctx, shop))
+
 
     @shop_admin.command(
         name="create",
@@ -266,7 +310,8 @@ class Shops(commands.Cog):
         )
 
         shop = Shop(guild_id=ctx.guild_id, name=name, type=shop_type, owner_id=owner.id, channel_id=shop_channel.id,
-                    shelf=shelf, network=network, mastery=mastery, seeks_remaining=1, max_cost=None, active=True)
+                    shelf=shelf, network=network, mastery=mastery, seeks_remaining=1, max_cost=None, seek_roll=None,
+                    active=True)
 
         async with self.bot.db.acquire() as conn:
             await conn.execute(insert_new_shop(shop))

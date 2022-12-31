@@ -75,6 +75,7 @@ shops_table = sa.Table(
     Column("mastery", Integer, nullable=True, default=0),
     Column("seeks_remaining", Integer, nullable=True, default=0),
     Column("max_cost", Integer, nullable=True),
+    Column("seek_roll", String, nullable=True),
     Column("active", BOOLEAN, nullable=False, default=True)
 )
 
