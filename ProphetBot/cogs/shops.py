@@ -54,7 +54,7 @@ class Shops(commands.Cog):
             potion_items = list(ctx.bot.compendium.consumable[0].values())
 
             potion_stock = {'Potion of Healing': random.randint(1, 4)}
-            potion_stock.update(roll_stock(ctx.bot.compendium, g, potion_items, potion_qty, 4, 1))
+            potion_stock.update(roll_stock(ctx.bot.compendium, g, potion_items, potion_qty, 4,shop.max_cost, 1))
 
             potion_data = []
             for p in potion_stock:
@@ -74,7 +74,7 @@ class Shops(commands.Cog):
             scroll_qty = 6 + (3 * shop.shelf)
             scroll_items = list(ctx.bot.compendium.scroll[0].values())
 
-            scroll_stock = roll_stock(ctx.bot.compendium, g, scroll_items, scroll_qty, 2)
+            scroll_stock = roll_stock(ctx.bot.compendium, g, scroll_items, scroll_qty, 2, shop.max_cost)
 
             scroll_data = []
             for s in scroll_stock:
@@ -101,7 +101,7 @@ class Shops(commands.Cog):
             weapon_items = list(
                 filter(lambda i: i.sub_type.id == weapon_type.id, list(ctx.bot.compendium.blacksmith[0].values())))
 
-            weapon_stock = roll_stock(ctx.bot.compendium, g, weapon_items, weapon_qty, 1)
+            weapon_stock = roll_stock(ctx.bot.compendium, g, weapon_items, weapon_qty, 1, shop.max_cost)
 
             weapon_data = []
             for i in weapon_stock:
@@ -115,7 +115,7 @@ class Shops(commands.Cog):
             armor_items = list(filter(lambda i: i.sub_type.id == armor_type.id,
                                       list(ctx.bot.compendium.blacksmith[0].values())))
 
-            armor_stock = roll_stock(ctx.bot.compendium, g, armor_items, armor_qty, 1)
+            armor_stock = roll_stock(ctx.bot.compendium, g, armor_items, armor_qty, 1, shop.max_cost)
 
             armor_data = []
             for i in armor_stock:
@@ -139,7 +139,7 @@ class Shops(commands.Cog):
             magic_qty = 9 + (3 * shop.shelf)
             magic_items = list(ctx.bot.compendium.wondrous[0].values())
 
-            magic_stock = roll_stock(ctx.bot.compendium, g, magic_items, magic_qty, 1)
+            magic_stock = roll_stock(ctx.bot.compendium, g, magic_items, magic_qty, 1, shop.max_cost)
 
             magic_data = []
             for m in magic_stock:
