@@ -261,6 +261,7 @@ def roll_stock(compendium, g: PlayerGuild, items: [], quantity: int, max_qty: in
     idx = bisect.bisect(list(compendium.c_shop_tier[0].keys()), g.max_level)
     id = list(compendium.c_shop_tier[0].keys())[idx - 1]
     tier = compendium.get_object("c_shop_tier", id)
+    max_cost = 1000000 if max_cost is None else max_cost
 
     if len(items) == 0:
         return None
