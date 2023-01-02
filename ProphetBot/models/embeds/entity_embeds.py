@@ -164,7 +164,7 @@ class AdventureEPEmbed(Embed):
         super().__init__(
             title="Adventure Rewards",
             description=f"**Adventure:** {adventure.name}\n"
-                        f"**Adventure Tier:** {adventure.tier}\n"
+                        f"**Adventure Tier:** {adventure.tier.id}\n"
                         f"**EP Earned:** {ep}\n"
                         f"**EP Earned to date:** {adventure.ep}\n"
                         f"*Note: Rewards are 1/2 of your diversion caps for each EP*\n",
@@ -282,7 +282,7 @@ class GuildStatus(Embed):
         self.set_thumbnail(url=THUMBNAIL)
 
         in_count = 0 if inactive is None else len(inactive)
-        xp_goal = g.max_level + 1 * (total - in_count) * g.xp_adjust
+        xp_goal = ((g.max_level + 1) * (total - in_count)) * g.xp_adjust
         xp_percent = round((g.week_xp + g.server_xp) / xp_goal,2) * 100
 
         self.description +=f"\n **XP Goal: ** {xp_goal} (*{xp_percent}%*)\n" \
