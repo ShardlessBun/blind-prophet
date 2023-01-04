@@ -137,13 +137,14 @@ def get_faction_roles(compendium: Compendium, player: Member) -> List[Role] | No
     return roles
 
 
-def get_level_cap(character: PlayerCharacter, guild: PlayerGuild, compendium: Compendium) -> LevelCaps:
+def get_level_cap(character: PlayerCharacter, guild: PlayerGuild, compendium: Compendium, adjust: bool=True) -> LevelCaps:
     cap: LevelCaps = compendium.get_object("c_level_caps", character.get_level())
     return_cap = LevelCaps(cap.id, cap.max_gold, cap.max_xp)
 
     # Adjustment
-    if character.get_level() < guild.max_level - 2:
-        return_cap.max_gold = cap.max_gold * 2
-        return_cap.max_xp = cap.max_xp * 2
+    if adjust:
+        if character.get_level() < guild.max_level - 2:
+            return_cap.max_gold = cap.max_gold * 2
+            return_cap.max_xp = cap.max_xp * 2
 
     return return_cap
