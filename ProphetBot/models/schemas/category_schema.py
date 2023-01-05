@@ -7,7 +7,7 @@ class RaritySchema(Schema):
     id = fields.Integer(data_key="id", required=True)
     value = fields.String(data_key="value", required=True)
     abbreviation = fields.List(fields.String, data_key="abbreviation", required=True)
-
+    seek_dc = fields.Integer(data_key="seek_dc", required=True)
     @post_load
     def make_c_rarity(self, data, **kwargs):
         return Rarity(**data)

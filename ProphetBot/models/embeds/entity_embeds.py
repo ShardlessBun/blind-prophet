@@ -2,6 +2,7 @@ import calendar
 from typing import List
 
 import discord
+from d20 import RollResult
 from discord import Embed, Member, ApplicationContext, Color
 
 from ProphetBot.constants import THUMBNAIL
@@ -417,8 +418,29 @@ class ShopEmbed(Embed):
                                      f"**Shelf Upgrades:** {shop.shelf}\n"
                                      f"**Network Upgrades:** {shop.network}\n"
                                      f"**Mastery Upgrades:** {shop.mastery}\n"
-                                     f"**Max Cost:** {shop.max_cost}\n"
+                                     f"**Max Cost:** {shop.max_cost}\n\n"
+                                     f"**Seek Roll:** `{shop.seek_roll}`\n"
                                      f"**Seeks:** {shop.seeks_remaining} / {shop.network + 1}")
 
         self.set_thumbnail(url=shop.get_owner(ctx).display_avatar.url)
+
+class ShopSeekEmbed(Embed):
+    def __init__(self, shop: Shop, roll: RollResult, dc: int | None, phrase: str | None):
+        super().__init__(title=f"{shop.name}",
+                         color=Color.random())
+
+        if phrase is not None:
+            self.title += f" - {phrase}"
+        else:
+            self.title += f" - Seeking"
+
+        if dc is not None:
+            result = "**Success!**" if roll.total >= dc else "*Failure*"
+            self.add_field(name=f"DC {dc}",
+                           value=f"{str(roll)}\n\n"
+                                 f"{result}")
+        else:
+            self.description=f"{str(roll)}"
+
+        self.set_footer(text=f"{shop.seeks_remaining} / {shop.network + 1} seeks remaining")
 
