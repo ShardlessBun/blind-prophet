@@ -296,11 +296,11 @@ class GuildStatus(Embed):
         if g.reset_hour is not None:
             self.add_field(name="**Reset Schedule**",
                            value=f"**Approx Next Run:** <t:{g.get_next_reset()}>\n"
-                                 f"**Last Reset: ** <t:{g.get_last_reset()}>")
+                                 f"**Last Reset: ** <t:{g.get_last_reset()}>", inline=False)
 
         if display_inact and inactive is not None:
             self.add_field(name="Inactive Characters",
-                           value="\n".join([f"\u200b - {p.get_member(ctx).mention}" for p in inactive]))
+                           value="\n".join([f"\u200b - {p.get_member(ctx).mention}" for p in inactive]), inline=False)
 
 
 class BlacksmithItemEmbed(Embed):
