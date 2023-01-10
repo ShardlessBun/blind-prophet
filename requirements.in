@@ -1,8 +1,9 @@
-py-cord>=2.0.0b7
-gspread
 aiopg
+py-cord
 aiopg[sa]
 pip-tools
 texttable
 marshmallow
 numpy
+d20
+pillow

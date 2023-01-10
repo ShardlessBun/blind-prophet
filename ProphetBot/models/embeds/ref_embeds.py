@@ -1,6 +1,8 @@
+import io
 from typing import Dict, List
 
 import discord
+from PIL import Image
 from discord import Embed, Color, ApplicationContext, Guild
 
 from ProphetBot.constants import THUMBNAIL
@@ -184,3 +186,11 @@ class GlobalEmbed(Embed):
                                value="\n".join(f"\u200b {p.get_name(ctx)} ({p.gold}, {p.xp}, {p.num_messages})" for p in
                                                player_list),
                                inline=False)
+
+
+class GuildProgress(Embed):
+    def __init__(self, name: str):
+        super().__init__(title=f"{name} Level Progress",
+                         color=Color.random(),
+                         timestamp=discord.utils.utcnow())
+

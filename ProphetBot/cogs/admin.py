@@ -1,14 +1,16 @@
 import asyncio
-import datetime
+import io
 import logging
+
+import discord
+from PIL import Image, ImageDraw, ImageFilter
 from discord import SlashCommandGroup, Option, ExtensionAlreadyLoaded, ExtensionNotFound, ExtensionNotLoaded, \
-    ApplicationContext
+    ApplicationContext, Embed
 from discord.ext import commands, tasks
-from gspread.exceptions import APIError
 from os import listdir
 
 from ProphetBot.constants import ADMIN_GUILDS
-from ProphetBot.helpers import is_owner
+from ProphetBot.helpers import is_owner, draw_progress_bar
 from ProphetBot.bot import BpBot
 
 log = logging.getLogger(__name__)
@@ -148,9 +150,30 @@ class Admin(commands.Cog):
         name="test"
     )
     async def test(self, ctx: ApplicationContext):
-        dt = datetime.datetime.utcnow()
-        day = dt.weekday()
-        await ctx.respond(f"dt: {dt} and day {day}")
+        progress = .5
+        width = 900
+        height = 200
+
+        out = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        d = ImageDraw.Draw(out)
+        d = draw_progress_bar(d, 10, 10, width, height, progress)
+
+        test = out.filter(ImageFilter.SHARPEN)
+
+
+        embed = Embed(title=f"{ctx.guild.name} Level Progress")
+
+        with io.BytesIO() as output:
+            test.save(output, format="PNG", quality=95)
+            output.seek(0)
+            file = discord.File(fp=output, filename='image.png')
+            embed.set_image(url="attachment://image.png")
+            await ctx.respond(file=file, embed=embed)
+
+
+        # dt = datetime.datetime.utcnow()
+        # day = dt.weekday()
+        # await ctx.respond(f"dt: {dt} and day {day}")
 
     # --------------------------- #
     # Private Methods

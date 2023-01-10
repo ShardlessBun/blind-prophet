@@ -3,6 +3,7 @@ import re
 import random
 from datetime import datetime
 from statistics import mean
+from typing import List
 
 import aiopg
 import discord
