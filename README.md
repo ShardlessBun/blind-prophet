@@ -19,6 +19,7 @@ All assumed roles by the bot.
 * **Lead DM**: Helps manage adventures/DM's
 * **Quester**: Players eligible for adventures
 * **Fledgling**: Members who have yet to create a character
+* **Shopkeeper**: Shopkeer role for members who own shops. 
 
 ### Faction Roles
 Used by the faction commands. Each faction should have a Role with the same name
