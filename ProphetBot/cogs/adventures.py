@@ -293,7 +293,7 @@ class Adventures(commands.Cog):
                     await ctx.send(f"{player.mention} already in adventure '{adventure.name}'")
                 else:
                     await player.add_roles(adventure_role, reason=f"{player.name} added to role {adventure_role.name} by"
-                                                                  f"{ctx.author.name}")
+                                                                  f" {ctx.author.name}")
                     await ctx.send(f"{player.mention} added to adventure '{adventure.name}'")
 
             # Tier Calculation
@@ -381,8 +381,7 @@ class Adventures(commands.Cog):
 
             await ctx.respond(embed=AdventureCloseEmbed(ctx, adventure))
 
-            for member in adventure_role.members:
-                await member.remove_roles(adventure_role, reason=f"Adventure completed")
+            await adventure_role.delete(reason=f'Closing adventure')
 
             async with ctx.bot.db.acquire() as conn:
                 await conn.execute(update_adventure(adventure))

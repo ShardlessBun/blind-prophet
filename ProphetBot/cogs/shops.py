@@ -316,6 +316,11 @@ class Shops(commands.Cog):
         async with self.bot.db.acquire() as conn:
             await conn.execute(insert_new_shop(shop))
 
+        shopkeep_role = discord.utils.get(ctx.guild.roles, name="Shopkeeper")
+
+        if shopkeep_role and (shopkeep_role not in owner.roles):
+            await owner.add_roles(shopkeep_role, reason=f"Opening shop {name}")
+
         log.info(f"Finished opening shop {name}")
 
         return await ctx.respond(embed=NewShopEmbed(ctx, shop))
@@ -371,5 +376,10 @@ class Shops(commands.Cog):
 
         async with self.bot.db.acquire() as conn:
             await conn.execute(update_shop(shop))
+
+        shopkeep_role = discord.utils.get(ctx.guild.roles, name="Shopkeeper")
+
+        if shopkeep_role and (shopkeep_role in owner.roles):
+            await owner.remove_roles(shopkeep_role, reason=f"Closing shop {shop.name}")
 
         return await ctx.respond(f'{shop.name}  owned by {owner.mention} closed.')
