@@ -1,5 +1,5 @@
 import discord
-from PIL import Image
+from PIL import Image, ImageDraw
 from discord import ApplicationContext
 from sqlalchemy.util import asyncio
 
@@ -82,18 +82,41 @@ def auth_and_chan(ctx):
 
 def draw_progress_bar(d, x, y, w, h, progress, bg="black"):
     # draw background
-    d.rectangle((x + w, y, x + h + w, y + h), fill=bg)
-    d.rectangle((x, y, x + h, y + h), fill=bg)
-    d.rectangle((x + (h / 2), y, x + w + (h / 2), y + h), fill=bg)
+    d.ellipse((x + w, y, x + h + w, y + h), fill=bg)
+    d.ellipse((x, y, x + h, y + h), fill=bg)
+    d.rectangle((x + (h / 2), y, x + w + (h / 2), y + h), fill=bg, width=10)
 
     COLOR = [(255, 0, 0), (255, 165, 0), (255, 255, 0), (0, 255, 0), (75, 0, 130), (127,0,255)]
 
     # draw progress bar
-    if progress > 0:
+    if progress > .95:
         w *= progress
-        horizontal_gradient(d, Rect(x, y, x + w, y + h), gradient_color, COLOR)
+
+        d.ellipse((x + w, y, x + h + w, y + h), fill=(127,0,255))
+        d.ellipse((x, y, x + h, y + h), fill='red')
+        horizontal_gradient(d, Rect(x + (h / 2), y, x + w + (h / 2), y + h), gradient_color, COLOR)
+
+    elif progress < .05:
+        w *= progress
+
+        d.ellipse((x, y, x + h, y + h), fill='red')
+        d.ellipse((x + w, y, x + h + w, y + h), fill=bg)
+
+    elif progress < .08:
+        w *= progress
+
+        d.ellipse((x, y, x + h, y + h), fill='red')
+        d.rectangle((x + w, y, x + h + w, y + h), fill=bg, width=10)
+
+
+    elif progress > 0:
+        w *= progress
+
+        d.ellipse((x, y, x + h, y + h), fill='red')
+        horizontal_gradient(d, Rect(x + (h / 2), y, x + w + (h / 2), y + h), gradient_color, COLOR)
 
     return d
+
 
 class Rect(object):
     def __init__(self, x1, y1, x2, y2):

@@ -318,15 +318,14 @@ class Dashboards(commands.Cog):
             # Start Drawing
             width = 500
             height = int(width * .15)
+            scale = .86
 
             out = Image.new("RGBA", (width,height), (0,0,0,0))
             d = ImageDraw.Draw(out)
-            d = draw_progress_bar(d, 10, 10, width, height, progress)
+            d = draw_progress_bar(d, 0, 0, int(width*scale), int(height*scale), progress)
             sharp_out = out.filter(ImageFilter.SHARPEN)
 
             embed=GuildProgress(dGuild.name)
-
-            embed.description = f"Debugging Field - {g.get_xp_percent(total, inactive)}%"
 
             with io.BytesIO() as output:
                 sharp_out.save(output, format="PNG")
