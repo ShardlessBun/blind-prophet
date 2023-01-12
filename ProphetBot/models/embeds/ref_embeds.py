@@ -1,8 +1,6 @@
-import io
 from typing import Dict, List
 
 import discord
-from PIL import Image
 from discord import Embed, Color, ApplicationContext, Guild
 
 from ProphetBot.constants import THUMBNAIL

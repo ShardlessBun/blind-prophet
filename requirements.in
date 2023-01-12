@@ -1,5 +1,5 @@
 aiopg
-py-cord
+py-cord==2.2.2
 aiopg[sa]
 pip-tools
 texttable
@@ -7,3 +7,4 @@ marshmallow
 numpy
 d20
 pillow
+discord
