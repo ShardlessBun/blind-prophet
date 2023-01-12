@@ -1,15 +1,19 @@
 import asyncio
 import logging
+import io
 
 import discord.utils
+from PIL import Image, ImageDraw, ImageFilter
 from discord import SlashCommandGroup, ApplicationContext, TextChannel, Option, Message
 from discord.ext import commands, tasks
 
 from ProphetBot.bot import BpBot
 from ProphetBot.constants import DASHBOARD_REFRESH_INTERVAL
-from ProphetBot.helpers import get_dashboard_from_category_channel_id, get_last_message
-from ProphetBot.models.db_objects import RefCategoryDashboard, DashboardType, Shop, Adventure
-from ProphetBot.models.embeds import ErrorEmbed, RpDashboardEmbed, ShopDashboardEmbed, AdventureDashboardEmbed
+from ProphetBot.helpers import get_dashboard_from_category_channel_id, get_last_message, get_or_create_guild, \
+    get_guild_character_summary_stats, draw_progress_bar
+from ProphetBot.models.db_objects import RefCategoryDashboard, DashboardType, Shop, Adventure, PlayerGuild
+from ProphetBot.models.embeds import ErrorEmbed, RpDashboardEmbed, ShopDashboardEmbed, AdventureDashboardEmbed, \
+    GuildProgress
 from ProphetBot.models.schemas import RefCategoryDashboardSchema, ShopSchema, AdventureSchema
 from ProphetBot.queries import insert_new_dashboard, get_dashboards, delete_dashboard, update_dashboard, get_shops, \
     get_adventure_by_guild
@@ -159,6 +163,38 @@ class Dashboards(commands.Cog):
         await self.update_dashboard(dashboard)
 
     @dashboard_commands.command(
+        name="guild_create",
+        description="Creates a dashboard showing guild progress"
+    )
+    async def dashboard_guild_create(self, ctx: ApplicationContext):
+        await ctx.defer()
+
+        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx)
+
+        if dashboard is not None:
+            return await ctx.respond(embed=ErrorEmbed(description="There is already a dashboard for this category. "
+                                                                  "Delete that before creating another"),
+                                     ephemeral=True)
+
+        # Create post with dummy text in it
+        interaction = await ctx.respond("Fetching dashboard data. This may take a moment")
+        msg: Message = await ctx.channel.fetch_message(interaction.id)
+        await msg.pin(reason=f"Shop dashboard created by {ctx.author.name}")
+
+        dType = ctx.bot.compendium.get_object("c_dashboard_type", "GUILD")
+
+        dashboard = RefCategoryDashboard(category_channel_id=ctx.channel.category.id,
+                                         dashboard_post_channel_id=ctx.channel_id,
+                                         dashboard_post_id=msg.id,
+                                         excluded_channel_ids=[],
+                                         dashboard_type=dType.id)
+
+        async with ctx.bot.db.acquire() as conn:
+            await conn.execute(insert_new_dashboard(dashboard))
+
+        await self.update_dashboard(dashboard)
+
+    @dashboard_commands.command(
         name="rp_exclude",
         description="Add a channel to the exclusions list"
     )
@@ -271,6 +307,34 @@ class Dashboards(commands.Cog):
                                 a["players"].append(p)
 
             return await original_message.edit(content='', embed=AdventureDashboardEmbed(g, adventures))
+
+        elif dType is not None and dType.value.upper() == "GUILD":
+            dGuild: discord.Guild = dashboard.get_category_channel(self.bot).guild
+            g: PlayerGuild = await get_or_create_guild(self.bot.db, dGuild.id)
+            total, inactive = await get_guild_character_summary_stats(self.bot, dGuild.id)
+
+            progress=g.get_xp_float(total, inactive) if g.get_xp_float(total, inactive) <= 1 else 1
+
+            # Start Drawing
+            width = 500
+            height = int(width * .15)
+            scale = .86
+
+            out = Image.new("RGBA", (width,height), (0,0,0,0))
+            d = ImageDraw.Draw(out)
+            d = draw_progress_bar(d, 0, 0, int(width*scale), int(height*scale), progress)
+            sharp_out = out.filter(ImageFilter.SHARPEN)
+
+            embed=GuildProgress(dGuild.name)
+
+            with io.BytesIO() as output:
+                sharp_out.save(output, format="PNG")
+                output.seek(0)
+                file = discord.File(fp=output, filename='image.png')
+                embed.set_image(url="attachment://image.png")
+
+                return await original_message.edit(file=file, embed=embed, content='')
+
 
     # --------------------------- #
     # Tasks

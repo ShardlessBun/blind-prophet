@@ -277,16 +277,14 @@ class GuildStatus(Embed):
                          description=f"**Max Level:** {g.max_level}\n"
                                      f"**Server XP:** {g.server_xp}\n"
                                      f"**Week XP:** {g.week_xp}\n"
-                                     f"**Total XP:** {g.server_xp + g.week_xp}\n"
+                                     f"**Total XP:** {g.total_xp()}\n"
                                      f"**# Weeks:** {g.weeks}\n")
 
         self.set_thumbnail(url=THUMBNAIL)
 
         in_count = 0 if inactive is None else len(inactive)
-        xp_goal = ((g.max_level + 1) * (total - in_count)) * g.xp_adjust
-        xp_percent = round((g.week_xp + g.server_xp) / xp_goal,2) * 100
 
-        self.description +=f"\n **XP Goal: ** {xp_goal} (*{xp_percent}%*)\n" \
+        self.description +=f"\n **XP Goal: ** {g.get_xp_goal(total, inactive)} (*{g.get_xp_percent(total, inactive)}%*)\n" \
                            f"**XP Adjust:** {g.xp_adjust}\n"
 
         self.description += f"\n**Total Characters:** {total}\n" \
@@ -301,7 +299,6 @@ class GuildStatus(Embed):
         if display_inact and inactive is not None:
             self.add_field(name="Inactive Characters",
                            value="\n".join([f"\u200b - {p.get_member(ctx).mention}" for p in inactive]), inline=False)
-
 
 class BlacksmithItemEmbed(Embed):
     def __init__(self, item: ItemBlacksmith):
@@ -443,4 +440,3 @@ class ShopSeekEmbed(Embed):
             self.description=f"{str(roll)}"
 
         self.set_footer(text=f"{shop.seeks_remaining} / {shop.network + 1} seeks remaining")
-

@@ -99,6 +99,20 @@ class PlayerGuild(object):
     def get_last_reset(self):
         return calendar.timegm(self.last_reset.utctimetuple())
 
+    def get_xp_goal(self, total: int, inactive: List[PlayerCharacter] | None) -> int:
+        in_count = 0 if inactive is None else len(inactive)
+        return ((self.max_level + 1) * (total - in_count)) * self.xp_adjust
+
+    def get_xp_percent(self, total: int, inactive: List[PlayerCharacter | None]) -> float:
+        return round((self.total_xp() / self.get_xp_goal(total, inactive)) * 100,2)
+
+    def get_xp_float(self, total: int, inactive: List[PlayerCharacter] | None) -> float:
+        return round((self.total_xp() / self.get_xp_goal(total, inactive)), 2)
+    def total_xp(self) -> int:
+        return self.week_xp + self.server_xp
+
+
+
 
 class Adventure(object):
     guild_id: int

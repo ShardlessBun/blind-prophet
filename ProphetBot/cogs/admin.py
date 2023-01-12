@@ -1,10 +1,9 @@
 import asyncio
-import datetime
 import logging
+
 from discord import SlashCommandGroup, Option, ExtensionAlreadyLoaded, ExtensionNotFound, ExtensionNotLoaded, \
     ApplicationContext
 from discord.ext import commands, tasks
-from gspread.exceptions import APIError
 from os import listdir
 
 from ProphetBot.constants import ADMIN_GUILDS
@@ -144,13 +143,6 @@ class Admin(commands.Cog):
                 files.append(file_name[:-3])
         await ctx.respond("\n".join(files))
 
-    @admin_commands.command(
-        name="test"
-    )
-    async def test(self, ctx: ApplicationContext):
-        dt = datetime.datetime.utcnow()
-        day = dt.weekday()
-        await ctx.respond(f"dt: {dt} and day {day}")
 
     # --------------------------- #
     # Private Methods
