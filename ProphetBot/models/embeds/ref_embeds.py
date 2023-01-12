@@ -188,7 +188,7 @@ class GlobalEmbed(Embed):
 
 class GuildProgress(Embed):
     def __init__(self, name: str):
-        super().__init__(title=f"{name} Level Progress",
+        super().__init__(title=f"{name} Server Level Progress",
                          color=Color.random(),
                          timestamp=discord.utils.utcnow())
 
