@@ -2,13 +2,16 @@ import bisect
 import logging
 from datetime import datetime
 from statistics import mean
+from typing import List
+
 import discord
-from discord import ApplicationContext, Option, SlashCommandGroup, Role
+from discord import ApplicationContext, Option, SlashCommandGroup, Role, Member
 from discord.ext import commands
 from ProphetBot.bot import BpBot
-from ProphetBot.helpers import update_dm, get_adventure, get_character, get_adventure_from_role, is_admin
-from ProphetBot.models.db_objects import Adventure
-from ProphetBot.models.embeds import AdventureCloseEmbed, ErrorEmbed, AdventureStatusEmbed
+from ProphetBot.helpers import update_dm, get_adventure, get_character, get_adventure_from_role, is_admin, \
+    get_player_adventures, get_player_character_class
+from ProphetBot.models.db_objects import Adventure, PlayerCharacter, PlayerCharacterClass
+from ProphetBot.models.embeds import AdventureCloseEmbed, ErrorEmbed, AdventureStatusEmbed, AdventuresEmbed
 from ProphetBot.queries import insert_new_adventure, update_adventure
 
 log = logging.getLogger(__name__)
@@ -32,6 +35,31 @@ class Adventures(commands.Cog):
         self.bot = bot
 
         log.info(f'Cog \'Adventures\' loaded')
+
+    @commands.slash_command(
+        name="adventures",
+        description="Shows active adventures for a player"
+    )
+    async def adventure_get(self, ctx: ApplicationContext,
+                            player: Option(Member, description="Player to get the information of", required=False),
+                            phrase: Option(str, description="Additional question/phrase to add", required=False)):
+        await ctx.defer()
+
+        if player is None:
+            player = ctx.author
+
+        character: PlayerCharacter = await get_character(ctx.bot, player.id, ctx.guild_id)
+
+        if character is None:
+            return await ctx.respond(embed=ErrorEmbed(
+                description=f"No character information found for {player.mention}"),
+                ephemeral=True)
+
+        class_ary: List[PlayerCharacterClass] = await get_player_character_class(ctx.bot, character.id)
+        adventures = await get_player_adventures(ctx.bot, player)
+
+        return await ctx.respond(embed=AdventuresEmbed(ctx, character, class_ary, adventures, phrase))
+
 
     @adventure_commands.command(
         name="create",
@@ -394,6 +422,8 @@ class Adventures(commands.Cog):
                                role: Option(Role, description="Role of the adventure if not ran in an Adventure Channel",
                                             required=False, default=None)):
 
+        await ctx.defer()
+
         if role is None:
             adventure: Adventure = await get_adventure(ctx.bot, ctx.channel.category_id)
         else:
@@ -405,6 +435,33 @@ class Adventures(commands.Cog):
             return await ctx.respond(f"Error: No adventure found for {role.mention}.")
 
         return await ctx.respond(embed=AdventureStatusEmbed(ctx, adventure))
+
+    @adventure_commands.command(
+        name="set_tier",
+        description="Recalculates an adventure tier"
+    )
+    async def adventure_set_tier(self, ctx: ApplicationContext,
+                                 tier: Option(int, description="Adventure Tier", min_value=1, max_value=5,
+                                              required=True)):
+        await ctx.defer()
+
+        adventure: Adventure = await get_adventure(ctx.bot, ctx.channel.category_id)
+
+        if adventure is None:
+            return await ctx.respond(embed=ErrorEmbed(description="No adventure associated with this channel"))
+        elif ctx.author.id not in adventure.dms and not is_admin(ctx):
+            return await ctx.respond(embed=ErrorEmbed(description="Error: You either need to be the DM for this "
+                                                                  "adventure or Council to do this."))
+
+        t_tier = ctx.bot.compendium.get_object("c_adventure_tier", tier)
+
+        adventure.tier = t_tier
+
+        async with ctx.bot.db.acquire() as conn:
+            await conn.execute(update_adventure(adventure))
+
+        return await ctx.respond(embed=AdventureStatusEmbed(ctx, adventure))
+
 
     @room_commands.command(
         name="add_room",

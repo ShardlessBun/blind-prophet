@@ -31,7 +31,7 @@ class CharacterGetEmbed(Embed):
                  cap: LevelCaps, ctx: ApplicationContext):
         super().__init__(title=f"Character Info - {character.name}")
 
-        self.description = f"**Class**:" if len(char_class) == 1 else f"**Classes**"
+        self.description = f"**Class:**" if len(char_class) == 1 else f"**Classes:**"
         self.description += f"\n".join([f" {c.get_formatted_class()}" for c in char_class])
         self.description += f"\n**Race: ** {character.get_formatted_race()}\n" \
                             f"**Faction:** {character.faction.value}\n" \
@@ -440,3 +440,41 @@ class ShopSeekEmbed(Embed):
             self.description=f"{str(roll)}"
 
         self.set_footer(text=f"{shop.seeks_remaining} / {shop.network + 1} seeks remaining")
+
+
+class AdventuresEmbed(Embed):
+    def __init__(self, ctx: ApplicationContext, character: PlayerCharacter, class_ary: List[PlayerCharacterClass],
+                 adventures: List, phrase: str | None = None):
+        super().__init__(title=f"Adventure Info - {character.name}")
+
+        faction_role = character.faction.get_faction_role(ctx)
+        self.color = faction_role.color if faction_role else Color.dark_grey()
+        self.set_thumbnail(url=character.get_member(ctx).display_avatar.url)
+
+        self.description = f'**Class:**' if len(class_ary) == 1 else f'**Classes:**'
+        self.description+= f"\n".join([f" {c.get_formatted_class()}" for c in class_ary])
+        self.description+=f'\n**Level:** {character.get_level()}'
+
+
+
+        if len(adventures['player']) > 0:
+            value = "\n".join([f'\u200b - {a.get_adventure_role(ctx).mention}' for a in adventures['player']])
+        else:
+            value = "None"
+
+        self.add_field(name=f"Player ({len(adventures['player'])})", value=value, inline=False)
+
+        if len(adventures['dm'])>0:
+            self.add_field(name=f"DM ({len(adventures['dm'])})",
+                           value="\n".join([f'\u200b - {a.get_adventure_role(ctx).mention}' for a in adventures['dm']]),
+                           inline=False)
+
+        if phrase is not None:
+            outString = phrase.split("|")
+            if len(outString)>1:
+                self.add_field(name=outString[0], value=outString[1], inline=False)
+            else:
+                self.add_field(name=outString[0], value="", inline=False)
+
+
+

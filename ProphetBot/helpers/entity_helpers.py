@@ -325,3 +325,18 @@ async def get_shop(bot: Bot | Client, owner_id: int | None, guild_id: int | None
     else:
         shop: Shop = ShopSchema(bot.compendium).load(row)
         return shop
+
+async def get_player_adventures(bot: Bot | Client, player: Member):
+    adventures = {}
+    adventures['player'] = []
+    adventures['dm'] = []
+
+    for role in player.roles:
+        adventure: Adventure = await get_adventure_from_role(bot, role.id)
+        if adventure is not None:
+            if player.id in adventure.dms:
+                adventures['dm'].append(adventure)
+            else:
+                adventures['player'].append(adventure)
+
+    return adventures
