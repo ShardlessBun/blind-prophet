@@ -383,3 +383,29 @@ class Shops(commands.Cog):
             await owner.remove_roles(shopkeep_role, reason=f"Closing shop {shop.name}")
 
         return await ctx.respond(f'{shop.name}  owned by {owner.mention} closed.')
+
+    @shop_admin.command(
+        name="convert",
+        description="Convert a shop to a different shop type"
+    )
+    async def shop_convert(self, ctx: ApplicationContext,
+                           owner: Option(Member, description="Shop Owner", required=True),
+                           type: Option(str, description="Shop type to convert to",
+                                        autocomplete=shop_create_type_autocomplete, required=True)):
+        await ctx.defer()
+
+        shop: Shop = await get_shop(ctx.bot, owner.id, ctx.guild_id)
+
+        if shop is None:
+            return await ctx.respond(embed=ErrorEmbed(description=f"No shop found owned by {owner.mention}"),
+                                     ephemeral=True)
+
+        s_type = ctx.bot.compendium.get_object("c_shop_type", type)
+
+        shop.type = s_type
+
+        async with self.bot.db.acquire() as conn:
+            await conn.execute(update_shop(shop))
+
+        return await ctx.respond(embed=ShopEmbed(ctx, shop))
+
