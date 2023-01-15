@@ -8,7 +8,8 @@ from discord.commands.context import ApplicationContext
 from discord.ext import commands
 
 from ProphetBot.bot import BpBot
-from ProphetBot.helpers import get_arena, get_character, add_player_to_arena, update_arena_tier, create_logs, update_arena_status, end_arena
+from ProphetBot.helpers import get_arena, get_character, add_player_to_arena, update_arena_tier, create_logs, \
+    update_arena_status, end_arena, confirm
 from ProphetBot.models.db_objects import Arena, PlayerCharacter, Activity
 from ProphetBot.models.embeds import ArenaStatusEmbed, ArenaPhaseEmbed
 from ProphetBot.models.schemas import CharacterSchema
@@ -236,6 +237,14 @@ class Arenas(commands.Cog):
         await ctx.defer()
 
         arena: Arena = await get_arena(ctx.bot, ctx.channel_id)
+
+        to_end = await confirm(ctx, "Are you sure you want to close this arena? (Reply with yes/no)", True)
+
+        if to_end is None:
+            return await ctx.respond(f'Timed out waiting for a response or invalid response.', delete_after=10)
+        elif not to_end:
+            return await ctx.respond(f'Ok, cancelling.', delete_after=10)
+
 
         if arena is None:
             return await ctx.respond(f"Error: No active arena present in this channel", ephemeral=True)

@@ -9,7 +9,7 @@ from texttable import Texttable
 
 from ProphetBot.bot import BpBot
 from ProphetBot.helpers import get_or_create_guild, sort_stock, \
-    shop_create_type_autocomplete, get_shop, upgrade_autocomplete, roll_stock, paginate, rarity_autocomplete
+    shop_create_type_autocomplete, get_shop, upgrade_autocomplete, roll_stock, paginate, rarity_autocomplete, confirm
 from ProphetBot.models.db_objects import PlayerGuild, Shop
 from ProphetBot.models.embeds import ErrorEmbed, NewShopEmbed, ShopEmbed, ShopSeekEmbed
 from ProphetBot.queries import insert_new_shop, update_shop
@@ -371,6 +371,13 @@ class Shops(commands.Cog):
         if shop is None:
             return await ctx.respond(embed=ErrorEmbed(description=f"No shop found owned by {owner.mention}"),
                                      ephemeral=True)
+
+        to_end = await confirm(ctx, f"Are you sure you want to close {shop.name}? (Reply with yes/no)", True)
+
+        if to_end is None:
+            return await ctx.respond(f'Timed out waiting for a response or invalid response.', delete_after=10)
+        elif not to_end:
+            return await ctx.respond(f'Ok, cancelling.', delete_after=10)
 
         shop.active = False
 

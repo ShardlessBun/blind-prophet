@@ -9,7 +9,7 @@ from discord import ApplicationContext, Option, SlashCommandGroup, Role, Member
 from discord.ext import commands
 from ProphetBot.bot import BpBot
 from ProphetBot.helpers import update_dm, get_adventure, get_character, get_adventure_from_role, is_admin, \
-    get_player_adventures, get_player_character_class
+    get_player_adventures, get_player_character_class, confirm
 from ProphetBot.models.db_objects import Adventure, PlayerCharacter, PlayerCharacterClass
 from ProphetBot.models.embeds import AdventureCloseEmbed, ErrorEmbed, AdventureStatusEmbed, AdventuresEmbed
 from ProphetBot.queries import insert_new_adventure, update_adventure
@@ -392,6 +392,8 @@ class Adventures(commands.Cog):
         :param role: Role of the adventure
         """
 
+        await ctx.defer()
+
         if role is None:
             adventure: Adventure = await get_adventure(ctx.bot, ctx.channel.category_id)
         else:
@@ -404,6 +406,14 @@ class Adventures(commands.Cog):
         elif ctx.author.id not in adventure.dms and not is_admin(ctx):
             return await ctx.respond(f"Error: You are not a DM of this adventure")
         else:
+            to_end = await confirm(ctx, "Are you sure you want to end this adventure? (Reply with yes/no)", True)
+
+            if to_end is None:
+                return await ctx.respond(f'Timed out waiting for a response or invalid response.', delete_after=10)
+            elif not to_end:
+                return await ctx.respond(f'Ok, cancelling.', delete_after=10)
+
+
             adventure_role = adventure.get_adventure_role(ctx)
             adventure.end_ts = datetime.utcnow()
 
