@@ -64,37 +64,6 @@ class ShopDashboardEmbed(Embed):
                     inline=False
                 )
 
-class AdventureDashboardEmbed(Embed):
-    def __init__(self, g: Guild, adventures: dict):
-        super(AdventureDashboardEmbed, self).__init__(
-            color=Color.dark_grey(),
-            title=f'{g.name} Adventures',
-            timestamp=discord.utils.utcnow()
-        )
-
-        if len(adventures) == 0:
-            self.add_field(name="No Adventures")
-        else:
-            for tier in adventures.keys():
-                value_string = ""
-                if len(adventures[tier]) > 0:
-                    for a in adventures[tier]:
-                        adventure = a["adventure"]
-                        dm_string = ", ".join([f"{p.mention}" for p in a["dms"]])
-
-                        a_string = f"**{adventure.name}** - *DM: {dm_string}*\n" \
-                                   f"Role: {g.get_role(adventure.role_id).mention}\n" \
-                                   f"Players: \n"
-
-                        a_string += "\n".join([f"\u200b - {p.mention}" for p in a["players"]])
-
-                        value_string += a_string + "\n\n"
-
-                    self.add_field(
-                        name=f"**Tier {tier} Adventures**",
-                        value=value_string
-                    )
-
 
 
 class GlobalEmbed(Embed):
