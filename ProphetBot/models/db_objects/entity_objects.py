@@ -49,6 +49,15 @@ class PlayerCharacter(object):
     def get_member(self, ctx: ApplicationContext) -> discord.Member:
         return discord.utils.get(ctx.guild.members, id=self.player_id)
 
+    def get_member_mention(self, ctx: ApplicationContext):
+        try:
+            name = discord.utils.get(ctx.guild.members, id=self.player_id).mention
+            pass
+        except:
+            name = f"Player {self.player_id} not found on this server for character {self.name}"
+            pass
+        return name
+
     def mention(self) -> str:
         return f"<@{self.player_id}>"
 
