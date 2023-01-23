@@ -14,9 +14,11 @@ def setup(bot: commands.Bot):
 
 class Holdings(commands.Cog):
     bot: BpBot
-    holding_commands = SlashCommandGroup("holding_admin", "Commands related to guild specific settings")
+    holding_admin = SlashCommandGroup("holding_admin", "Commands related to holding administration")
+    holding_commands = SlashCommandGroup("holding", "Commands related to your holding")
 
-    @holding_commands.command(
+
+    @holding_admin.command(
         name="create",
         description="Open a holding"
     )
@@ -24,7 +26,9 @@ class Holdings(commands.Cog):
                            owner: Option(Member, description="Holding owner", required=True),
                            name: Option(str, description="Name of the holding", required=True),
                            category_channel: Option(CategoryChannel, description="Holding Channel Category",
-                                                    required=True)):
+                                                    required=True),
+                           owner_2: Option(Member, description="2nd Owner", required=False),
+                           owner_3: Option(Member, description="3rd Owner", required=False)):
 
         await ctx.defer()
 
@@ -32,6 +36,11 @@ class Holdings(commands.Cog):
 
         chan_perms[owner] = discord.PermissionOverwrite(manage_channels=True,
                                                         manage_messages=True)
+        if owner_2 is not None:
+            chan_perms[owner_2] = chan_perms[owner]
+
+        if owner_3 is not None:
+            chan_perms[owner_3] = chan_perms[owner]
 
         holding_chanel = await ctx.guild.create_text_channel(
             name=name,
@@ -42,3 +51,4 @@ class Holdings(commands.Cog):
 
         await holding_chanel.send(f'{owner.mention} welcome to your new holding.')
         await ctx.delete()
+
