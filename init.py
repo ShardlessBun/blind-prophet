@@ -112,8 +112,6 @@ async def on_member_remove(member):
 
         embed.title += f" has left the server.\n\n"
 
-
-
         if character is None:
             roles = []
             for r in member.roles:
