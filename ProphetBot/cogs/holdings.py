@@ -4,6 +4,7 @@ import discord
 from discord import SlashCommandGroup, ApplicationContext, Member, Option, CategoryChannel, TextChannel
 from discord.ext import commands
 from ProphetBot.bot import  BpBot
+from ProphetBot.helpers import is_admin
 from ProphetBot.models.embeds import ErrorEmbed
 
 log = logging.getLogger(__name__)
@@ -16,13 +17,13 @@ def setup(bot: commands.Bot):
 class Holdings(commands.Cog):
     bot: BpBot
     holding_admin = SlashCommandGroup("holding_admin", "Commands related to holding administration")
-    holding_commands = SlashCommandGroup("holding", "Commands related to your holding")
 
 
     @holding_admin.command(
         name="create",
         description="Open a holding"
     )
+    @commands.check(is_admin)
     async def holding_open(self, ctx: ApplicationContext,
                            owner: Option(Member, description="Holding owner", required=True),
                            name: Option(str, description="Name of the holding", required=True),
@@ -74,6 +75,7 @@ class Holdings(commands.Cog):
         name="modify_owner",
         description="Add an owner to a holding"
     )
+    @commands.check(is_admin)
     async def holding_modify(self, ctx: ApplicationContext,
                              owner: Option(Member, description="Owner to add/remove", required=True),
                              channel: Option(TextChannel, description="Holding to modify", required=True),
