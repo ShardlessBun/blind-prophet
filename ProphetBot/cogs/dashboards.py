@@ -11,12 +11,11 @@ from ProphetBot.bot import BpBot
 from ProphetBot.constants import DASHBOARD_REFRESH_INTERVAL
 from ProphetBot.helpers import get_dashboard_from_category_channel_id, get_last_message, get_or_create_guild, \
     get_guild_character_summary_stats, draw_progress_bar
-from ProphetBot.models.db_objects import RefCategoryDashboard, DashboardType, Shop, Adventure, PlayerGuild
-from ProphetBot.models.embeds import ErrorEmbed, RpDashboardEmbed, ShopDashboardEmbed, AdventureDashboardEmbed, \
+from ProphetBot.models.db_objects import RefCategoryDashboard, DashboardType, Shop, PlayerGuild
+from ProphetBot.models.embeds import ErrorEmbed, RpDashboardEmbed, ShopDashboardEmbed, \
     GuildProgress
-from ProphetBot.models.schemas import RefCategoryDashboardSchema, ShopSchema, AdventureSchema
-from ProphetBot.queries import insert_new_dashboard, get_dashboards, delete_dashboard, update_dashboard, get_shops, \
-    get_adventure_by_guild
+from ProphetBot.models.schemas import RefCategoryDashboardSchema, ShopSchema
+from ProphetBot.queries import insert_new_dashboard, get_dashboards, delete_dashboard, update_dashboard, get_shops
 from timeit import default_timer as timer
 
 log = logging.getLogger(__name__)
