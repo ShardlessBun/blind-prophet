@@ -298,7 +298,7 @@ class GuildStatus(Embed):
 
         if display_inact and inactive is not None:
             self.add_field(name="Inactive Characters",
-                           value="\n".join([f"\u200b - {p.get_member(ctx).mention}" for p in inactive]), inline=False)
+                           value="\n".join([f"\u200b - {p.get_member_mention(ctx)}" for p in inactive]), inline=False)
 
 class BlacksmithItemEmbed(Embed):
     def __init__(self, item: ItemBlacksmith):

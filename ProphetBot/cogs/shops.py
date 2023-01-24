@@ -348,6 +348,7 @@ class Shops(commands.Cog):
             shop.shelf += num
         elif type.upper() == 'NETWORK':
             shop.network += num
+            shop.seeks_remaining += num
         elif type.upper() == 'MASTERY':
             shop.mastery += num
         else:

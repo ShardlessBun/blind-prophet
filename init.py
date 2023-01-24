@@ -2,12 +2,15 @@ import asyncio
 import logging
 import sys
 import traceback
+from datetime import datetime
 from os import listdir
 import discord
-from discord import Intents, ApplicationContext
+from discord import Intents, ApplicationContext, Embed
 from discord.ext import commands
 from ProphetBot.bot import BpBot
 from ProphetBot.constants import BOT_TOKEN, DEFAULT_PREFIX, DEBUG_GUILDS
+from ProphetBot.helpers import get_character, get_player_adventures, get_shop
+from ProphetBot.models.db_objects import PlayerCharacter, Shop
 
 intents = Intents.default()
 intents.members = True
@@ -93,6 +96,78 @@ async def on_application_command(ctx):
         )
     except AttributeError:
         log.info("Command in PM with {0.message.author} ({0.message.author.id}): {0.message.content}.".format(ctx))
+
+@bot.event
+async def on_member_remove(member):
+    if exit_channel := discord.utils.get(member.guild.channels, name="exit"):
+        character: PlayerCharacter = await get_character(bot, member.id, member.guild.id)
+        adventures = await get_player_adventures(bot, member)
+
+        embed = Embed(title=f'{member.name}#{member.discriminator}')
+
+        if member.nick is not None:
+            embed.title += f" ( `{member.nick}` )"
+        else:
+            embed.title += f"( No nickname )"
+
+        embed.title += f" has left the server.\n\n"
+
+        if character is None:
+            roles = []
+            for r in member.roles:
+                if 'everyone' in r.name:
+                    pass
+                else:
+                    roles.append(r)
+
+            value="\n".join(f'\u200b - {r.mention}' for r in roles)
+
+            embed.add_field(name="Roles", value=value, inline=False)
+
+        else:
+            embed.description=f"**Character:** {character.name}\n" \
+                              f"**Level:** {character.get_level()}\n" \
+                              f"**Faction:** {character.faction.value}"
+
+        if shopkeeper_role := discord.utils.get(member.guild.roles, name="Shopkeeper"):
+            if shopkeeper_role in member.roles:
+                shop: Shop = await get_shop(bot, member.id, member.guild.id)
+                if shop is None:
+                    value = "Has role, but no shop found"
+                else:
+                    value = f"{shop.name}"
+            else:
+                value = "*None*"
+        embed.add_field(name=f"Shopkeeper", value=value, inline=False)
+
+        if len(adventures['player']) > 0 or len(adventures['dm']) > 0:
+            value = "\n".join([f'\u200b - {a.name}*' for a in adventures['dm']])
+            value +="\n".join([f'\u200b - {a.name}' for a in adventures['player']])
+            count = len(adventures['player']) + len(adventures['dm'])
+        else:
+            value = "*None"
+            count = 0
+        embed.add_field(name=f"Adventures ({count})", value=value, inline=False)
+
+        arenas = []
+        for r in member.roles:
+            if 'arena' in r.name.lower():
+                arenas.append(r)
+
+        if len(arenas) > 0:
+            value = "\n".join(f'\u200b - {r.mention}' for r in arenas)
+            count = len(arenas)
+        else:
+            value = "*None*"
+            count = 0
+        embed.add_field(name=f"Arenas ({count})", value=value, inline=False)
+
+        try:
+            await exit_channel.send(embed=embed)
+        except Exception as error:
+            if isinstance(error, discord.errors.HTTPException):
+                log.error(f"ON_MEMBER_REMOVE: Error sending message to exit channel in "
+                          f"{member.guild.name} [ {g.id} ] for {member.name} [ {member.id} ]")
 
 
 bot.run(BOT_TOKEN)

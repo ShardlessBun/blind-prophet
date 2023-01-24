@@ -99,6 +99,7 @@ class Guilds(commands.Cog):
 
         g: PlayerGuild = await get_or_create_guild(ctx.bot.db, ctx.guild_id)
         g.max_level = amount
+        g.week_xp = 0
         g.server_xp = 0
         async with self.bot.db.acquire() as conn:
             await conn.execute(update_guild(g))
