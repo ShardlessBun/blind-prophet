@@ -152,7 +152,7 @@ async def on_member_remove(member):
         embed.add_field(name=f"Shopkeeper", value=value, inline=False)
 
         if len(adventures['player']) > 0 or len(adventures['dm']) > 0:
-            value = "\n".join([f'\u200b - {a.name}*' for a in adventures['dm']]) + "\n"
+            value = "".join([f'\u200b - {a.name}*\n' for a in adventures['dm']])
             value +="\n".join([f'\u200b - {a.name}' for a in adventures['player']])
             count = len(adventures['player']) + len(adventures['dm'])
         else:
