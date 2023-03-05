@@ -551,6 +551,7 @@ class Character(commands.Cog):
 
         # Role cleanup
         current_faction_roles = get_faction_roles(ctx.bot.compendium, player)
+        current_faction_roles.remove("Guild Initiate")
         if current_faction_roles is not None:
             await player.remove_roles(*current_faction_roles, reason=f"Player Reroll")
 
