@@ -9,7 +9,8 @@ from texttable import Texttable
 
 from ProphetBot.bot import BpBot
 from ProphetBot.helpers import get_or_create_guild, sort_stock, \
-    shop_create_type_autocomplete, get_shop, upgrade_autocomplete, roll_stock, paginate, rarity_autocomplete, confirm
+    shop_create_type_autocomplete, get_shop, upgrade_autocomplete, roll_stock, paginate, rarity_autocomplete, confirm, \
+    item_autocomplete
 from ProphetBot.models.db_objects import PlayerGuild, Shop
 from ProphetBot.models.embeds import ErrorEmbed, NewShopEmbed, ShopEmbed, ShopSeekEmbed
 from ProphetBot.queries import insert_new_shop, update_shop
@@ -156,7 +157,142 @@ class Shops(commands.Cog):
             return
 
         else:
-            return ctx.respond(embed=ErrorEmbed(description=f"Error rolling inventory"), ephemeral=True)
+            return await ctx.respond(embed=ErrorEmbed(description=f"Error rolling inventory"), ephemeral=True)
+
+    @shop_commands.command(
+        name="reroll_item",
+        description="Re-Rolls an item"
+    )
+    async def item_inventory(self, ctx: ApplicationContext,
+                             item: Option(str, description="Item rerolling",
+                                          autocomplete=item_autocomplete, required=True)):
+        await ctx.defer()
+
+        shop: Shop = await get_shop(ctx.bot, ctx.author.id, ctx.guild_id)
+
+        if shop is None:
+            return await ctx.respond(embed=ErrorEmbed(description=f"Shop not found"), ephemeral=True)
+
+        g: PlayerGuild = await get_or_create_guild(ctx.bot.db, ctx.guild_id)
+
+
+        if shop.type.id == 1 and (item_record := ctx.bot.compendium.get_object("consumable", item)):  # Consumable
+            potion_table = Texttable()
+            potion_table.set_cols_align(['l', 'c', 'l'])
+            potion_table.set_cols_valign(['m', 'm', 'm'])
+            potion_table.set_cols_width([20, 5, 7])
+
+            potion_table.header(['Item', 'Qty', 'Cost'])
+            potion_qty = 1
+            potion_items = list(ctx.bot.compendium.consumable[0].values())
+            potion_stock = roll_stock(ctx.bot.compendium, g, potion_items, potion_qty, 4, shop.max_cost)
+
+            potion_data = []
+            for p in potion_stock:
+                if p == 'Potion of Healing':
+                    potion_data.append([p, str(potion_stock[p]), '50'])
+                else:
+                    potion = ctx.bot.compendium.get_object("consumable", p)
+                    potion_data.append([potion.name, str(potion_stock[p]), str(potion.cost)])
+
+            potion_table.add_rows(sort_stock(potion_data), header=False)
+            await ctx.delete()
+            await ctx.send(
+                f'Re-rolling stock for {ctx.guild.get_channel(shop.channel_id).mention} replacing {item_record.name}')
+            await paginate(ctx, potion_table.draw())
+            return
+        elif shop.type.id == 1 and (item_record := ctx.bot.compendium.get_object("scroll", item)):
+            scroll_table = Texttable()
+            scroll_table.set_cols_align(['l', 'c', 'l'])
+            scroll_table.set_cols_valign(['m', 'm', 'm'])
+            scroll_table.set_cols_width([20, 5, 7])
+            scroll_table.header(['Item (lvl)', 'Qty', 'Cost'])
+            scroll_qty = 1
+            scroll_items = list(ctx.bot.compendium.scroll[0].values())
+
+            scroll_stock = roll_stock(ctx.bot.compendium, g, scroll_items, scroll_qty, 2, shop.max_cost)
+
+            scroll_data = []
+            for s in scroll_stock:
+                scroll = ctx.bot.compendium.get_object("scroll", s)
+                scroll_data.append([scroll.display_name(), str(scroll_stock[s]), str(scroll.cost)])
+
+            scroll_table.add_rows(sort_stock(scroll_data), header=False)
+
+            await ctx.delete()
+            await ctx.send(f'Re-rolling stock for {ctx.guild.get_channel(shop.channel_id).mention} replacing {item_record.name}')
+            await paginate(ctx, scroll_table.draw())
+            return
+
+        elif shop.type.id == 2 and (item_record := ctx.bot.compendium.get_object("blacksmith", item)):  # Blacksmith
+            smith_table = Texttable()
+            smith_table.set_cols_align(['l', 'c', 'l'])
+            smith_table.set_cols_valign(['m', 'm', 'm'])
+            smith_table.set_cols_width([20, 5, 7])
+            smith_table.header(['Item', 'Qty', 'Cost'])
+
+            if item_record.sub_type.value.lower() == "weapon":
+                weapon_qty = 1
+                weapon_type = ctx.bot.compendium.get_object("c_blacksmith_type", "Weapon")
+                weapon_items = list(
+                    filter(lambda i: i.sub_type.id == weapon_type.id, list(ctx.bot.compendium.blacksmith[0].values())))
+
+                weapon_stock = roll_stock(ctx.bot.compendium, g, weapon_items, weapon_qty, 1, shop.max_cost)
+
+                weapon_data = []
+                for i in weapon_stock:
+                    weapon = ctx.bot.compendium.get_object("blacksmith", i)
+                    weapon_data.append([weapon.name, str(weapon_stock[i]), weapon.display_cost()])
+
+                smith_table.add_rows(sort_stock(weapon_data), header=False)
+            elif item_record.sub_type.value.lower() == "armor":
+                armor_qty = 1
+                armor_type = ctx.bot.compendium.get_object("c_blacksmith_type", "Armor")
+                armor_items = list(filter(lambda i: i.sub_type.id == armor_type.id,
+                                          list(ctx.bot.compendium.blacksmith[0].values())))
+
+                armor_stock = roll_stock(ctx.bot.compendium, g, armor_items, armor_qty, 1, shop.max_cost)
+
+                armor_data = []
+                for i in armor_stock:
+                    armor = ctx.bot.compendium.get_object("blacksmith", i)
+                    armor_data.append([armor.name, str(armor_stock[i]), armor.display_cost()])
+
+                smith_table.add_rows(sort_stock(armor_data), header=False)
+            else:
+                return ctx.respond(embed=ErrorEmbed("Can't reroll this item"), ephemeral=True)
+
+            await ctx.delete()
+            await ctx.send(f'Re-rolling stock for {ctx.guild.get_channel(shop.channel_id).mention} replacing {item_record.name}')
+            await paginate(ctx, smith_table.draw())
+            return
+
+        elif shop.type.id == 3 and (item_record := ctx.bot.compendium.get_object("wondrous", item)):  # Magic Shops
+            magic_table = Texttable()
+            magic_table.set_cols_align(['l', 'c', 'l'])
+            magic_table.set_cols_valign(['m', 'm', 'm'])
+            magic_table.set_cols_width([20, 5, 7])
+            magic_table.header(['Item', 'Qty', 'Cost'])
+
+            magic_qty = 1
+            magic_items = list(ctx.bot.compendium.wondrous[0].values())
+
+            magic_stock = roll_stock(ctx.bot.compendium, g, magic_items, magic_qty, 1, shop.max_cost)
+
+            magic_data = []
+            for m in magic_stock:
+                mItem = ctx.bot.compendium.get_object("wondrous", m)
+
+                magic_data.append([mItem.name, str(magic_stock[m]), str(mItem.cost)])
+
+            magic_table.add_rows(sort_stock(magic_data), header=False)
+
+            await ctx.delete()
+            await ctx.send(f'Re-rolling stock for {ctx.guild.get_channel(shop.channel_id).mention} replacing {item_record.name}')
+            await paginate(ctx, magic_table.draw())
+            return
+        else:
+            return await ctx.respond(embed=ErrorEmbed(description=f"Error re-rolling inventory"), ephemeral=True)
 
     @shop_commands.command(
         name="max_cost",
