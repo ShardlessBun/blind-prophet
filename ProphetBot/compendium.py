@@ -131,10 +131,17 @@ class Compendium:
             log.info(f"COMPENDIUM: Items reloaded in [ {end - start:.2f} ]s")
 
     def get_object(self, node: str, value: str | int = None):
-        try:
-            if isinstance(value, int):
-                return self.__getattribute__(node)[0][value]
+        if hasattr(self, node):
+            if len(self.__getattribute__(node)[0]) > 0:
+                try:
+                    if isinstance(value, int):
+                        return self.__getattribute__(node)[0][value]
+                    else:
+                        return self.__getattribute__(node)[1][value]
+                except KeyError:
+                    return None
             else:
-                return self.__getattribute__(node)[1][value]
-        except KeyError:
+                return None
+        else:
+            raise KeyError(f"{node} does not exist in the compendium")
             return None
