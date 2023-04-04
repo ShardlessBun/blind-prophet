@@ -301,7 +301,6 @@ class Guilds(commands.Cog):
 
         # Reset weekly stats
         async with self.bot.db.acquire() as conn:
-            await conn.execute(update_guild(g))
             async for row in await conn.execute(get_characters(g.id)):
                 if row is not None:
                     character: PlayerCharacter = CharacterSchema(self.bot.compendium).load(row)
@@ -355,6 +354,10 @@ class Guilds(commands.Cog):
                     shop: Shop = ShopSchema(self.bot.compendium).load(row)
                     shop.seeks_remaining = 1 + shop.network
                     await conn.execute(update_shop(shop))
+
+        # Guild
+        async with self.bot.db.acquire() as conn:
+            await conn.execute(update_guild(g))
 
         end = timer()
 
