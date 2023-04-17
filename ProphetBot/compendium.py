@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from timeit import default_timer as timer
+from types import NoneType
 
 from ProphetBot.models.db_objects.item_objects import ItemBlacksmith, ItemWondrous, ItemConsumable, ItemScroll
 from ProphetBot.models.schemas.category_schema import *
@@ -131,10 +132,18 @@ class Compendium:
             log.info(f"COMPENDIUM: Items reloaded in [ {end - start:.2f} ]s")
 
     def get_object(self, node: str, value: str | int = None):
-        try:
-            if isinstance(value, int):
-                return self.__getattribute__(node)[0][value]
+        if hasattr(self, node):
+            if len(self.__getattribute__(node)) > 0:
+                try:
+                    if isinstance(value, int):
+                        return self.__getattribute__(node)[0][value]
+                    else:
+                        return self.__getattribute__(node)[1][value]
+                except KeyError:
+                    return None
             else:
-                return self.__getattribute__(node)[1][value]
-        except KeyError:
+                raise AttributeError(f"{node} has not been populated yet")
+                return None
+        else:
+            raise KeyError(f"{node} does not exist in the compendium")
             return None

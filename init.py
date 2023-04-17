@@ -2,7 +2,6 @@ import asyncio
 import logging
 import sys
 import traceback
-from datetime import datetime
 from os import listdir
 import discord
 from discord import Intents, ApplicationContext, Embed
@@ -55,7 +54,7 @@ for filename in listdir('ProphetBot/cogs'):
 @bot.command()
 async def ping(ctx):
     print("Pong")
-    await ctx.send(f'Pong! Latency is {round(bot.latency * 1000)}ms.')
+    await ctx.send(f'Pong! Latency is {round(bot.latency * 1000)}ms.')\
 
 @bot.command(name="asay")
 @commands.check(is_admin)
@@ -84,6 +83,8 @@ async def on_application_command_error(ctx: ApplicationContext, error):
 
     if isinstance(error, discord.errors.CheckFailure):
         return await ctx.respond(f'You do not have required permissions for `{ctx.command}`')
+    if isinstance(error.original, AttributeError):
+        return await ctx.respond(f"Try again in a minute, and if doesn't work let us know")
     else:
         log.warning("Error in command: '{}'".format(ctx.command))
         for line in traceback.format_exception(type(error), error, error.__traceback__):

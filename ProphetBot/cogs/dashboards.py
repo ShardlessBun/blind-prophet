@@ -249,7 +249,10 @@ class Dashboards(commands.Cog):
             g: PlayerGuild = await get_or_create_guild(self.bot.db, dGuild.id)
             total, inactive = await get_guild_character_summary_stats(self.bot, dGuild.id)
 
-            progress=g.get_xp_float(total, inactive) if g.get_xp_float(total, inactive) <= 1 else 1
+            try:
+                progress=g.get_xp_float(total, inactive) if g.get_xp_float(total, inactive) <= 1 else 1
+            except ZeroDivisionError:
+                return
 
             # Start Drawing
             width = 500
