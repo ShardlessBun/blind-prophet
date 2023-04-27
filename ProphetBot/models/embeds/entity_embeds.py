@@ -278,7 +278,7 @@ class GuildStatus(Embed):
                                      f"**Server XP:** {g.server_xp}\n"
                                      f"**Week XP:** {g.week_xp}\n"
                                      f"**Total XP:** {g.total_xp()}\n"
-                                     f"**# Weeks:** {g.weeks}\n")
+                                     f"**\# Weeks:** {g.weeks}\n")
 
         self.set_thumbnail(url=THUMBNAIL)
 
@@ -289,6 +289,7 @@ class GuildStatus(Embed):
 
         self.description += f"\n**Total Characters:** {total}\n" \
                             f"**Inactive Characters:** {in_count}\n" \
+                            f"**Active Characters:** {total - in_count}" \
                             f"*Inactive defined by no logs in past 30 days*"
 
         if g.reset_hour is not None:
@@ -299,6 +300,44 @@ class GuildStatus(Embed):
         if display_inact and inactive is not None:
             self.add_field(name="Inactive Characters",
                            value="\n".join([f"\u200b - {p.get_member_mention(ctx)}" for p in inactive]), inline=False)
+
+class GuildPace(Embed):
+    def __init__(self, ctx: ApplicationContext, g:PlayerGuild, pace: int, cur_week: int, xp_adj: int,
+                 total: int, inactive: List[PlayerCharacter] | None):
+        super().__init__(title=f"Level Pacing Simulation for - {ctx.guild.name}",
+                         colour=Color.random())
+
+        in_count = 0 if inactive is None else len(inactive)
+        act_players = total - in_count
+        total_xp = g.total_xp() + xp_adj
+        adjust = round(((total_xp / cur_week) * pace) / ((g.max_level + 1) * act_players), 0)
+
+        self.set_thumbnail(url=THUMBNAIL)
+
+        self.description = f"**Current Server Level:** {g.max_level}\n" \
+                           f"**Active Players:** {act_players}\n" \
+                           f"**Desired pace:** {pace} weeks\n" \
+                           f"**Weeks left to level:** {pace - cur_week} week(s)\n" \
+                           f"**Current XP:** {g.total_xp()}\n"
+
+        if xp_adj:
+            self.description += f"**Adjusted XP:** {total_xp}"
+
+        self.add_field(name="**Current Progress**",
+                       value=f"**Current Adjustment:** {g.xp_adjust}\n"
+                             f"**XP Goal:** {g.get_xp_goal(total, inactive)} (*{round(total_xp / g.get_xp_goal(total, inactive), 0)}%*)\n"
+                             f"**XP Deficit:** {total_xp - (g.get_xp_goal(total, inactive)/pace) * cur_week}", inline=False)
+
+        self.add_field(name="**Requirements for Pace**",
+                       value=f"**XP / Week:** {round(g.get_xp_goal(total, inactive) / pace, 2)} (*{round((100 / pace) * 100, 0)}%*)\n"
+                             f"**XP Adjust required for pace:** {adjust}", inline=False)
+
+
+
+
+
+
+
 
 class BlacksmithItemEmbed(Embed):
     def __init__(self, item: ItemBlacksmith):
