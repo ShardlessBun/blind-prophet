@@ -7,7 +7,7 @@ from discord.ext import commands, tasks
 from timeit import default_timer as timer
 from ProphetBot.helpers import get_or_create_guild, get_weekly_stipend, create_logs, \
     get_guild_character_summary_stats, get_level_cap
-from ProphetBot.models.embeds import GuildEmbed, GuildStatus
+from ProphetBot.models.embeds import GuildEmbed, GuildStatus, GuildPace
 from ProphetBot.models.schemas import CharacterSchema, RefWeeklyStipendSchema, GuildSchema, ShopSchema
 from ProphetBot.queries import update_guild, get_characters, update_character, insert_weekly_stipend, \
     update_weekly_stipend, delete_weekly_stipend, get_guild_weekly_stipends, get_multiple_characters, \
@@ -261,6 +261,23 @@ class Guilds(commands.Cog):
             await conn.execute(update_guild(g))
 
         return await ctx.respond(embed=GuildEmbed(ctx, g))
+
+    @guilds_commands.command(
+        name="level_pace",
+        description="Figure pacing"
+    )
+    async def guild_pace(self, ctx: ApplicationContext,
+                         pace: Option(int, description="How many weeks between levels", required=True),
+                         current_week: Option(int, description="How many weeks in the current level", required=True),
+                         xp_adj: Option(int, description="Server XP offset/adjustment for forecasting", default=0,
+                                        required=False)):
+        await ctx.defer()
+
+        g: PlayerGuild = await get_or_create_guild(ctx.bot.db, ctx.guild_id)
+
+        total, inactive = await get_guild_character_summary_stats(ctx.bot, ctx.guild_id)
+
+        return await ctx.respond(embed=GuildPace(ctx, g, pace, current_week, xp_adj, total, inactive))
 
 
     @guilds_commands.command(
