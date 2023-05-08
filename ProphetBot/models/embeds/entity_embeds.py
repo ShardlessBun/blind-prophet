@@ -289,7 +289,7 @@ class GuildStatus(Embed):
 
         self.description += f"\n**Total Characters:** {total}\n" \
                             f"**Inactive Characters:** {in_count}\n" \
-                            f"**Active Characters:** {total - in_count}" \
+                            f"**Active Characters:** {total - in_count}\n" \
                             f"*Inactive defined by no logs in past 30 days*"
 
         if g.reset_hour is not None:

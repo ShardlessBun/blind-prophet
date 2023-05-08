@@ -492,10 +492,12 @@ class Character(commands.Cog):
 
         # Setup the new character
         if death_reroll:
-            if character.xp - 1000 < 2000:
+            if level is not None:
+                new_xp = (level - 1) * 1000
+            elif character.xp - 2000 < 2000:
                 new_xp = 2000
             else:
-                new_xp = character.xp - 1000
+                new_xp = character.xp - 2000
 
             new_character = PlayerCharacter(player_id=player.id, guild_id=ctx.guild_id, name=name, race=c_race,
                                             subrace=c_subrace, xp=new_xp, div_xp = 0,
