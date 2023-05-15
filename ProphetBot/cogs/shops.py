@@ -43,6 +43,11 @@ class Shops(commands.Cog):
         if shop is None:
             return await ctx.respond(embed=ErrorEmbed(description=f"Shop not found"), ephemeral=True)
 
+        shop.inventory_rolled = True
+        async with ctx.bot.db.acquire() as conn:
+            await conn.execute(update_shop(shop))
+
+
         g: PlayerGuild = await get_or_create_guild(ctx.bot.db, ctx.guild_id)
 
         if shop.type.id == 1:  # Consumable
@@ -447,7 +452,7 @@ class Shops(commands.Cog):
 
         shop = Shop(guild_id=ctx.guild_id, name=name, type=shop_type, owner_id=owner.id, channel_id=shop_channel.id,
                     shelf=shelf, network=network, mastery=mastery, seeks_remaining=1, max_cost=None, seek_roll=None,
-                    active=True)
+                    active=True, inventory_rolled=False)
 
         async with self.bot.db.acquire() as conn:
             await conn.execute(insert_new_shop(shop))
@@ -547,6 +552,7 @@ class Shops(commands.Cog):
         s_type = ctx.bot.compendium.get_object("c_shop_type", type)
 
         shop.type = s_type
+        shop.inventory_rolled = False
 
         async with self.bot.db.acquire() as conn:
             await conn.execute(update_shop(shop))

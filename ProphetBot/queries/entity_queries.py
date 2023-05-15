@@ -141,6 +141,7 @@ def insert_new_shop(shop: Shop):
         seeks_remaining=shop.seeks_remaining,
         max_cost=shop.max_cost,
         seek_roll=shop.seek_roll,
+        inventory_rolled=shop.inventory_rolled,
         active=shop.active
     )
 
@@ -160,6 +161,7 @@ def update_shop(shop: Shop):
         seeks_remaining=shop.seeks_remaining,
         max_cost=shop.max_cost,
         seek_roll=shop.seek_roll,
+        inventory_rolled=shop.inventory_rolled,
         active=shop.active
     )
 
