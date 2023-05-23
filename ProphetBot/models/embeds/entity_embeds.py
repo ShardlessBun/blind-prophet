@@ -454,7 +454,8 @@ class ShopEmbed(Embed):
                                      f"**Shelf Upgrades:** {shop.shelf}\n"
                                      f"**Network Upgrades:** {shop.network}\n"
                                      f"**Mastery Upgrades:** {shop.mastery}\n"
-                                     f"**Max Cost:** {shop.max_cost}\n\n"
+                                     f"**Max Cost:** {shop.max_cost}\n"
+                                     f"**Inventory Rolled:** {shop.inventory_rolled}\n\n"
                                      f"**Seek Roll:** `{shop.seek_roll}`\n"
                                      f"**Seeks:** {shop.seeks_remaining} / {shop.network + 1}")
 

@@ -6,7 +6,7 @@ from ProphetBot.bot import BpBot
 from discord.ext import commands, tasks
 from timeit import default_timer as timer
 from ProphetBot.helpers import get_or_create_guild, get_weekly_stipend, create_logs, \
-    get_guild_character_summary_stats, get_level_cap
+    get_guild_character_summary_stats, get_level_cap, get_character
 from ProphetBot.models.embeds import GuildEmbed, GuildStatus, GuildPace
 from ProphetBot.models.schemas import CharacterSchema, RefWeeklyStipendSchema, GuildSchema, ShopSchema
 from ProphetBot.queries import update_guild, get_characters, update_character, insert_weekly_stipend, \
@@ -309,6 +309,7 @@ class Guilds(commands.Cog):
         player_xp = 0
         player_gold = 0
         stipend_list = []
+        shopkeeper_stipend = ""
 
         # Guild updates
         g.server_xp += g.week_xp
@@ -346,6 +347,9 @@ class Guilds(commands.Cog):
                 if stipend_role := self.bot.get_guild(g.id).get_role(s.role_id):
                     if s.leadership:
                         players = list(filter(lambda s: s not in s_players, [p.id for p in stipend_role.members]))
+                    elif "shopkeeper" in stipend_role.name.lower() or "shopkeeper" in s.reason.lower():
+                        shopkeeper_stipend = s
+                        players = []
                     else:
                         players = [p.id for p in stipend_role.members]
                     async with self.bot.db.acquire() as conn:
@@ -369,7 +373,16 @@ class Guilds(commands.Cog):
             async for row in await conn.execute(get_shops(g.id)):
                 if row is not None:
                     shop: Shop = ShopSchema(self.bot.compendium).load(row)
+
+                    if shopkeeper_stipend and shop.inventory_rolled:
+                        character: PlayerCharacter = await get_character(self.bot, shop.owner_id, g.id)
+                        cap: LevelCaps = get_level_cap(character, g, self.bot.compendium)
+                        await create_logs(self, character, act, f"Shopkeeper Stipend",
+                                          cap.max_gold * shopkeeper_stipend.ratio,
+                                          cap.max_xp * s.ratio)
+
                     shop.seeks_remaining = 1 + shop.network
+                    shop.inventory_rolled = False
                     await conn.execute(update_shop(shop))
 
         # Guild

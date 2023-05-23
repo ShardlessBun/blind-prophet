@@ -76,7 +76,8 @@ shops_table = sa.Table(
     Column("seeks_remaining", Integer, nullable=True, default=0),
     Column("max_cost", Integer, nullable=True),
     Column("seek_roll", String, nullable=True),
-    Column("active", BOOLEAN, nullable=False, default=True)
+    Column("active", BOOLEAN, nullable=False, default=True),
+    Column("inventory_rolled", BOOLEAN, nullable=False)
 )
 
 log_table = sa.Table(

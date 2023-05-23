@@ -190,6 +190,7 @@ class Shop(object):
     seeks_remaining: int
     max_cost: int | None
     seek_roll: str | None
+    inventory_rolled: bool
     active: bool
 
     def __init__(self, **kwargs):
