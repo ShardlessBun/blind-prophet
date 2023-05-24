@@ -1,13 +1,14 @@
 import asyncio
 import logging
 
+import discord
 from discord import SlashCommandGroup, Option, ExtensionAlreadyLoaded, ExtensionNotFound, ExtensionNotLoaded, \
     ApplicationContext
 from discord.ext import commands, tasks
 from os import listdir
 
 from ProphetBot.constants import ADMIN_GUILDS
-from ProphetBot.helpers import is_owner
+from ProphetBot.helpers import is_owner, is_admin
 from ProphetBot.bot import BpBot
 
 log = logging.getLogger(__name__)
@@ -142,6 +143,35 @@ class Admin(commands.Cog):
             if file_name.endswith('.py'):
                 files.append(file_name[:-3])
         await ctx.respond("\n".join(files))
+
+    @commands.command(name="spectator")
+    @commands.check(is_admin)
+    async def spectator_setup(self,
+                              ctx: ApplicationContext):
+
+        g: Guild = ctx.guild
+
+        quester_role = discord.utils.get(ctx.guild.roles, name="Quester")
+        spectator_role = discord.utils.get(ctx.guild.roles, name="Spectator")
+        channels = []
+
+        if spectator_role is None or quester_role is None:
+            return await ctx.send("Issue finding roles")
+
+        for channel in g.channels:
+            overwites = channel.overwrites
+
+            if quester_role in overwites:
+                overwites[spectator_role] = discord.PermissionOverwrite(
+                    view_channel=overwites[quester_role].view_channel)
+
+                await channel.edit(overwrites=overwites)
+
+                channels.append(f"{channel.mention} - Added with value {overwites[spectator_role].view_channel}")
+
+
+        return await ctx.send("\n".join(channels))
+
 
 
     # --------------------------- #

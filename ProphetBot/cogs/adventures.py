@@ -119,6 +119,15 @@ class Adventures(commands.Cog):
                     send_messages=True
                 )
 
+            # Setup the spectators
+            if spectator_role := discord.utils.get(ctx.guild.roles, name="Spectator"):
+                ic_overwrites[spectator_role] = discord.PermissionOverwrite(
+                    view_channel=True
+                )
+                ooc_overwrites[spectator_role] = discord.PermissionOverwrite(
+                    view_channel=True,
+                )
+
             log.info('ADVENTURE: Done creating category permissions and OOC overwrites')
 
             new_adventure_category = await ctx.guild.create_category_channel(

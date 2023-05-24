@@ -132,16 +132,21 @@ class Room(commands.Cog):
             overwrites = ctx.channel.overwrites
 
             if quester_role := discord.utils.get(ctx.guild.roles, name="Quester"):
-                overwrites[quester_role] = discord.PermissionOverwrite(view_channel=room_view,
+                overwrites[quester_role] = discord.PermissionOverwrite(view_channel=allow_post,
                                                                        send_messages=allow_post)
+
+            if spectator_role := discord.utils.get(ctx.guild.roles, name="Spectator"):
+                overwrites[spectator_role] = discord.PermissionOverwrite(view_channel=room_view)
+
+            if spectator_role or quester_role:
                 await ctx.channel.edit(overwrites=overwrites)
-                if allow_post:
-                    await ctx.respond(f"{ctx.channel.mention} is now {val} and able to be posted in by the "
-                                      f"{quester_role.mention} role")
-                else:
-                    await ctx.respond(f"{ctx.channel.mention} is now {val} to the {quester_role.mention} role")
+
+                response = f"{ctx.channel.mention} is now {val} to {spectator_role.mention} " \
+                           f"{f' and able to be posted in by {quester_role.mention}.' if allow_post else f' and closed to {quester_role.mention}'}"
             else:
-                await ctx.respond("Couldn't find the @Quester role")
+                response = "Couldn't find the @Quester and the @Spectator role"
+
+            return await ctx.respond(response)
 
     @room_commands.command(
         name="move",
