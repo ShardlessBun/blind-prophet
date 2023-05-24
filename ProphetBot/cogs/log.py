@@ -211,7 +211,7 @@ class Log(commands.Cog):
                     g.server_xp -= log_entry.server_xp
 
                 note = f"{log_entry.activity.value} log # {log_entry.id} nulled by " \
-                       f"{ctx.author.name}#{ctx.author.discriminator} for reason: {reason}"
+                       f"{ctx.author} for reason: {reason}"
 
                 act = ctx.bot.compendium.get_object("c_activity", "MOD")
 
