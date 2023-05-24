@@ -189,7 +189,7 @@ class AdventureEPEmbed(Embed):
             )
 
         self.set_thumbnail(url=THUMBNAIL)
-        self.set_footer(text=f"Logged by {ctx.author.name}#{ctx.author.discriminator}",
+        self.set_footer(text=f"Logged by {ctx.author}",
                         icon_url=ctx.author.display_avatar.url)
 
 
@@ -247,7 +247,7 @@ class AdventureCloseEmbed(Embed):
         )
 
         self.set_thumbnail(url=THUMBNAIL)
-        self.set_footer(text=f"Logged by {ctx.author.name}#{ctx.author.discriminator}",
+        self.set_footer(text=f"Logged by {ctx.author}",
                         icon_url=ctx.author.display_avatar.url)
 
 
