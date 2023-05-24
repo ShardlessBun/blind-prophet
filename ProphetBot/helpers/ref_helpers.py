@@ -63,7 +63,7 @@ def calc_amt(compendium: Compendium, base: int, pmod: GlobalModifier = None, hos
     elif hostmod.value.upper() == "PARTICIPATING":
         host_addition = 100
     elif hostmod.value.upper() == "HOSTING ONLY":
-        host_addition = (base * pmod) + 100
+        host_addition = round((base * pmod.adjustment)) + 100
         ratio_adj = 0
     else:
         host_addition = 0
