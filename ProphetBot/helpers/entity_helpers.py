@@ -15,7 +15,7 @@ from ProphetBot.models.schemas import GuildSchema, CharacterSchema, AdventureSch
     ShopSchema
 from ProphetBot.queries import get_guild, insert_new_guild, get_adventure_by_category_channel_id, \
     get_arena_by_channel, get_multiple_characters, update_arena, get_adventure_by_role_id, get_characters, \
-    get_logs_in_past, get_shop_by_owner, get_shop_by_channel
+    get_logs_in_past, get_shop_by_owner, get_shop_by_channel, get_shops
 
 
 async def get_or_create_guild(db: aiopg.sa.Engine, guild_id: int) -> PlayerGuild:
@@ -325,6 +325,19 @@ async def get_shop(bot: Bot | Client, owner_id: int | None, guild_id: int | None
     else:
         shop: Shop = ShopSchema(bot.compendium).load(row)
         return shop
+
+async def get_all_shops(bot: Bot | Client, guild_id: int) -> list[Shop] | None:
+    shops = []
+    async with bot.db.acquire() as conn:
+        async for row in conn.execute(get_shops(guild_id)):
+            if row is not None:
+                shops.append(ShopSchema(bot.compendium).load(row))
+
+    if len(shops) == 0:
+        return None
+
+    return shops
+
 
 async def get_player_adventures(bot: Bot | Client, player: Member):
     adventures = {}
