@@ -20,11 +20,6 @@ log = logging.getLogger(__name__)
 def setup(bot: commands.Bot):
     bot.add_cog(Adventures(bot))
 
-
- # TODO: Add @Spectator role option for view only into all IC channels; @Quester for sign-ups and spectator for viewing
- # TODO: Script for modifing/integrating @Spectator role
- # TODO: Set tier command
-
 class Adventures(commands.Cog):
     bot: BpBot  # Typing annotation for my IDE's sake
     adventure_commands = SlashCommandGroup("adventure", "Adventure commands")
@@ -122,6 +117,15 @@ class Adventures(commands.Cog):
                 ooc_overwrites[quester_role] = discord.PermissionOverwrite(
                     view_channel=True,
                     send_messages=True
+                )
+
+            # Setup the spectators
+            if spectator_role := discord.utils.get(ctx.guild.roles, name="Spectator"):
+                ic_overwrites[spectator_role] = discord.PermissionOverwrite(
+                    view_channel=True
+                )
+                ooc_overwrites[spectator_role] = discord.PermissionOverwrite(
+                    view_channel=True,
                 )
 
             log.info('ADVENTURE: Done creating category permissions and OOC overwrites')
@@ -465,6 +469,35 @@ class Adventures(commands.Cog):
         t_tier = ctx.bot.compendium.get_object("c_adventure_tier", tier)
 
         adventure.tier = t_tier
+
+        async with ctx.bot.db.acquire() as conn:
+            await conn.execute(update_adventure(adventure))
+
+        return await ctx.respond(embed=AdventureStatusEmbed(ctx, adventure))
+
+    @adventure_commands.command(
+        name="set_ep",
+        description="Update adventure EP"
+    )
+    @commands.check(is_admin)
+    async def adventures_set_ep(self, ctx: ApplicationContext,
+                                role: Option(Role,
+                                             description="Role of the adventure if not ran in an Adventure Channel",
+                                             required=False, default=None),
+                                ep: Option(int, description="Adventure EP", required=True)):
+        await ctx.defer()
+
+        if role is None:
+            adventure: Adventure = await get_adventure(ctx.bot, ctx.channel.category_id)
+        else:
+            adventure: Adventure = await get_adventure_from_role(ctx.bot, role.id)
+
+        if adventure is None and role is None:
+            return await ctx.respond(f"Error: No adventure associated with this channel")
+        elif adventure is None:
+            return await ctx.respond(f"Error: No adventure found for {role.mention}.")
+
+        adventure.ep = ep
 
         async with ctx.bot.db.acquire() as conn:
             await conn.execute(update_adventure(adventure))
