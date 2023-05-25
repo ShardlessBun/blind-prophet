@@ -10,7 +10,7 @@ from texttable import Texttable
 from ProphetBot.bot import BpBot
 from ProphetBot.helpers import get_or_create_guild, sort_stock, \
     shop_create_type_autocomplete, get_shop, upgrade_autocomplete, roll_stock, paginate, rarity_autocomplete, confirm, \
-    item_autocomplete
+    item_autocomplete, get_all_shops
 from ProphetBot.models.db_objects import PlayerGuild, Shop
 from ProphetBot.models.embeds import ErrorEmbed, NewShopEmbed, ShopEmbed, ShopSeekEmbed
 from ProphetBot.queries import insert_new_shop, update_shop
@@ -464,6 +464,8 @@ class Shops(commands.Cog):
 
         log.info(f"Finished opening shop {name}")
 
+        await sort_shops(ctx, category_channel)
+
         return await ctx.respond(embed=NewShopEmbed(ctx, shop))
 
     @shop_admin.command(
@@ -557,5 +559,36 @@ class Shops(commands.Cog):
         async with self.bot.db.acquire() as conn:
             await conn.execute(update_shop(shop))
 
+        await sort_shops(ctx, ctx.guild.get_channel(shop.channel_id).category)
+
         return await ctx.respond(embed=ShopEmbed(ctx, shop))
+
+    @commands.command("sort")
+    async def s_sort(self, ctx: ApplicationContext):
+        cat = ctx.guild.get_channel(1055210358794633219)
+        await sort_shops(ctx, cat)
+
+
+async def sort_shops(ctx:ApplicationContext, text_category: CategoryChannel):
+    shops = await get_all_shops(ctx.bot, ctx.guild.id)
+    s_shops = {}
+
+    for type in ctx.bot.compendium.c_shop_type[1]:
+        s_shops[type] = [ctx.guild.get_channel(shop.channel_id) for shop in shops if shop.type.value == type]
+        s_shops[type].sort(key=lambda x: x.name)
+
+    start = len(text_category.channels) - len(shops)
+
+    channels =text_category.channels[:start]
+
+    channels = channels + s_shops["Consumable"] + s_shops["Blacksmith"] + s_shops["Magic"]
+
+    if len(channels) != len(text_category.channels):
+        log.error(f"Sort shops indexing issue. There are some non-shop channels intermixed")
+
+    for c in channels:
+        await c.edit(position=channels.index(c))
+
+
+
 
