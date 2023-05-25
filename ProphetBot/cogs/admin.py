@@ -165,7 +165,12 @@ class Admin(commands.Cog):
                 overwites[spectator_role] = discord.PermissionOverwrite(
                     view_channel=overwites[quester_role].view_channel)
                 print(f"Updating: {channel.name}")
-                await channel.edit(overwrites=overwites)
+                try:
+                    await channel.edit(overwrites=overwites)
+                except:
+                    print(f"Error updating {channel.name}")
+                    pass
+
 
                 channels.append(f"{channel.mention} - Added with value {overwites[spectator_role].view_channel}")
 
