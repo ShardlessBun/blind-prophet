@@ -111,9 +111,6 @@ class Adventures(commands.Cog):
 
             # Setup the questers
             if quester_role := discord.utils.get(ctx.guild.roles, name="Quester"):
-                ic_overwrites[quester_role] = discord.PermissionOverwrite(
-                    view_channel=True
-                )
                 ooc_overwrites[quester_role] = discord.PermissionOverwrite(
                     view_channel=True,
                     send_messages=True
