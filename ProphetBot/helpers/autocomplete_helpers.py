@@ -1,4 +1,5 @@
 import discord
+from ProphetBot.helpers.character_helpers import get_all_player_characters
 
 
 async def character_class_autocomplete(ctx: discord.AutocompleteContext):
@@ -10,6 +11,13 @@ async def character_race_autocomplete(ctx: discord.AutocompleteContext):
     return [r for r in list(ctx.bot.compendium.c_character_race[1].keys())
             if r.lower().startswith(ctx.value.lower())]
 
+async def character_autocomplete(ctx: discord.AutocompleteContext):
+    player = ctx.options["player"]
+    if player is None:
+        return []
+    characters = await get_all_player_characters(ctx.bot, int(player), ctx.interaction.guild_id)
+
+    return [f"{c.name} [{c.id}]" for c in characters]
 
 async def character_subclass_autocomplete(ctx: discord.AutocompleteContext):
     picked_class = ctx.options["character_class"]

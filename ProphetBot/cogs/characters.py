@@ -1,4 +1,5 @@
 import logging
+import re
 from timeit import default_timer as timer
 from typing import List
 
@@ -6,10 +7,11 @@ from discord import SlashCommandGroup, Option, ApplicationContext, Member, Embed
 from discord.ext import commands
 from ProphetBot.bot import BpBot
 from ProphetBot.helpers import remove_fledgling_role, get_character_quests, get_character, get_player_character_class, \
-    create_logs, get_faction_roles, get_level_cap, get_or_create_guild, confirm, is_admin
+    create_logs, get_faction_roles, get_level_cap, get_or_create_guild, confirm, is_admin, get_active_character_from_char_id, \
+    get_all_player_characters, get_character_from_char_id
 from ProphetBot.helpers.autocomplete_helpers import *
 from ProphetBot.models.db_objects import PlayerCharacter, PlayerCharacterClass, DBLog, Faction, LevelCaps, PlayerGuild
-from ProphetBot.models.embeds import ErrorEmbed, NewCharacterEmbed, CharacterGetEmbed
+from ProphetBot.models.embeds import ErrorEmbed, NewCharacterEmbed, CharacterGetEmbed, PlayerCharactersEmbed
 from ProphetBot.models.schemas import CharacterSchema
 from ProphetBot.queries import insert_new_character, insert_new_class, update_character, update_class
 
@@ -572,11 +574,6 @@ class Character(commands.Cog):
 
         return await ctx.respond(embed=NewCharacterEmbed(new_character, player, new_class, log_entry, ctx))
 
-
-
-
-
-
     @character_admin_commands.command(
         name="resurrect",
         description="Logs a resurrection for a character"
@@ -612,8 +609,64 @@ class Character(commands.Cog):
 
         await ctx.respond(embed=embed)
 
+    @character_admin_commands.command(
+        name="character_lookup",
+        description="Get all characters for a player"
+    )
+    @commands.check(is_admin)
+    async def character_lookup(self, ctx: ApplicationContext,
+                               player: Option(Member, description="Player to lookup", required=True)):
+        await ctx.defer()
 
+        characters = await get_all_player_characters(ctx.bot, player.id, ctx.guild.id)
 
+        if characters is None:
+            return await ctx.respond(
+                embed=ErrorEmbed(description=f"No character information found for {player.mention}"),
+                ephemeral=True)
+
+        await ctx.respond(embed=PlayerCharactersEmbed(player, characters))
+
+    @character_admin_commands.command(
+        name="reactivate_character",
+        description="Reactivate a players old character"
+    )
+    @commands.check(is_admin)
+    async def character_reactivate(self, ctx: ApplicationContext,
+                                   player: Option(Member, description="Player whose characters to check", required=True),
+                                   character: Option(str, autocomplete=character_autocomplete, required=True)):
+
+        await ctx.defer()
+        char_id = re.findall(r'\[(.*?)\]',character)[0]
+
+        act_char: PlayerCharacter = await get_character(ctx.bot, player.id, ctx.guild_id)
+        re_char: PlayerCharacter = await get_character_from_char_id(ctx.bot, int(char_id))
+
+        if re_char is None:
+            return await ctx.respond(embed=ErrorEmbed(description=f"Could not retrieve character information for selection {character}"),
+                               ephemeral=True)
+
+        conf = await confirm(ctx, f"Are you sure you want to re-activate {re_char.name}"
+                                  f"{f',and inactivate {act_char.name}?' if act_char else '?'}\n"
+                                  f"(Reply with yes/no)", True)
+
+        if conf is None:
+            return await ctx.respond(f'Timed out waiting for a response or invalid response.', delete_after=10)
+        elif not conf:
+            return await ctx.respond(f'Ok, cancelling.', delete_after=10)
+
+        if act_char:
+            act_char.active = False
+
+        re_char.active = True
+
+        async with ctx.bot.db.acquire() as conn:
+            if act_char:
+                await conn.execute(update_character(act_char))
+
+            await conn.execute(update_character(re_char))
+
+        return await ctx.respond(f"{re_char.name} is now the active character for {player.mention}")
 
     @faction_commands.command(
         name="set",

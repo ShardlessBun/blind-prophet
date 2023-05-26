@@ -7,7 +7,7 @@ from ProphetBot.compendium import Compendium
 from ProphetBot.models.db_objects import PlayerCharacter, PlayerCharacterClass, PlayerGuild, LevelCaps
 from ProphetBot.models.schemas import CharacterSchema, PlayerCharacterClassSchema
 from ProphetBot.queries import get_log_by_player_and_activity, get_active_character, get_character_class, \
-    get_character_from_id
+    get_active_character_from_id, get_all_characters, get_character_from_id
 
 
 async def remove_fledgling_role(ctx: ApplicationContext, member: Member, reason: Optional[str]):
@@ -75,6 +75,36 @@ async def get_character(bot: Bot, player_id: int, guild_id: int) -> PlayerCharac
         character: PlayerCharacter = CharacterSchema(bot.compendium).load(row)
         return character
 
+async def get_all_player_characters(bot: Bot, player_id: int, guild_id: int) -> list[PlayerCharacter] | None:
+    characters = []
+    async with bot.db.acquire() as conn:
+        async for row in conn.execute(get_all_characters(player_id, guild_id)):
+            if row is not None:
+                characters.append(CharacterSchema(bot.compendium).load(row))
+
+    if len(characters) == 0:
+        return None
+
+    return characters
+
+
+async def get_active_character_from_char_id(bot: Bot, char_id: int) -> PlayerCharacter | None:
+    """
+    Retrieves the given PlayerCharacter
+
+    :param bot: Bot
+    :param char_id: Character ID
+    :return: PlayerCharacter if found, else None
+    """
+    async with bot.db.acquire() as conn:
+        results = await conn.execute(get_active_character_from_id(char_id))
+        row = await results.first()
+
+    if row is None:
+        return None
+
+    character: PlayerCharacter = CharacterSchema(bot.compendium).load(row)
+    return character
 
 async def get_character_from_char_id(bot: Bot, char_id: int) -> PlayerCharacter | None:
     """
