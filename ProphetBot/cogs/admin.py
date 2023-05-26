@@ -144,40 +144,6 @@ class Admin(commands.Cog):
                 files.append(file_name[:-3])
         await ctx.respond("\n".join(files))
 
-    @commands.command(name="spectator_setup")
-    @commands.check(is_admin)
-    async def spectator_setup(self,
-                              ctx: ApplicationContext):
-
-        g: Guild = ctx.guild
-
-        quester_role = discord.utils.get(ctx.guild.roles, name="Quester")
-        spectator_role = discord.utils.get(ctx.guild.roles, name="Spectator")
-        channels = []
-
-        if spectator_role is None or quester_role is None:
-            return await ctx.send("Issue finding roles")
-
-        for channel in g.channels:
-            overwites = channel.overwrites
-
-            if quester_role in overwites:
-                overwites[spectator_role] = discord.PermissionOverwrite(
-                    view_channel=overwites[quester_role].view_channel)
-                print(f"Updating: {channel.name}")
-                try:
-                    await channel.edit(overwrites=overwites)
-                except:
-                    print(f"Error updating {channel.name}")
-                    pass
-
-
-                channels.append(f"{channel.mention} - Added with value {overwites[spectator_role].view_channel}")
-
-
-        return await ctx.send("\n".join(channels))
-
-
 
     # --------------------------- #
     # Private Methods

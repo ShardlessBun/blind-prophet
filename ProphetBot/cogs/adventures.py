@@ -111,9 +111,6 @@ class Adventures(commands.Cog):
 
             # Setup the questers
             if quester_role := discord.utils.get(ctx.guild.roles, name="Quester"):
-                ic_overwrites[quester_role] = discord.PermissionOverwrite(
-                    view_channel=True
-                )
                 ooc_overwrites[quester_role] = discord.PermissionOverwrite(
                     view_channel=True,
                     send_messages=True
@@ -481,10 +478,10 @@ class Adventures(commands.Cog):
     )
     @commands.check(is_admin)
     async def adventures_set_ep(self, ctx: ApplicationContext,
+                                ep: Option(int, description="Adventure EP", required=True),
                                 role: Option(Role,
                                              description="Role of the adventure if not ran in an Adventure Channel",
-                                             required=False, default=None),
-                                ep: Option(int, description="Adventure EP", required=True)):
+                                             required=False, default=None)):
         await ctx.defer()
 
         if role is None:

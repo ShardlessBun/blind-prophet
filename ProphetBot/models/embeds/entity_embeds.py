@@ -59,6 +59,15 @@ class CharacterGetEmbed(Embed):
                                  f"\u200b \u200b \u200b Level {character.get_level()} Arenas: "
                                  f"{pretty_completed_arenas}/{character.needed_arenas}")
 
+class PlayerCharactersEmbed(Embed):
+    def __init__(self, player: Member, characters: list[PlayerCharacter]):
+        super().__init__(title=f"Characters for {player.name}")
+        self.set_thumbnail(url=player.display_avatar.url)
+        for char in characters:
+            self.add_field(name=f"{char.name} - {'Active' if char.active else 'Inactive'}",
+                           value=f"**Level:** {char.get_level()}\n"
+                                 f"**Reroll:** {char.reroll}\n"
+                                 f"**Character ID:** {char.id}", inline=False)
 
 class HxLogEmbed(Embed):
     def __init__(self, log_ary: [DBLog], character: PlayerCharacter, ctx: ApplicationContext):

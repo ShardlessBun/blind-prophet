@@ -4,7 +4,7 @@ from discord import SlashCommandGroup, Option, ApplicationContext, Member, Role,
 from discord.ext import commands
 
 from ProphetBot.helpers import get_character, create_logs, get_adventure_from_role, get_or_create_guild, get_level_cap, \
-    get_log, get_character_from_char_id, confirm, is_admin
+    get_log, get_active_character_from_char_id, confirm, is_admin
 from ProphetBot.bot import BpBot
 from ProphetBot.models.db_objects import PlayerCharacter, Activity, DBLog, Adventure, LevelCaps, PlayerGuild
 from ProphetBot.models.embeds import ErrorEmbed, HxLogEmbed, DBLogEmbed, AdventureEPEmbed
@@ -178,7 +178,7 @@ class Log(commands.Cog):
             return await ctx.respond(embed=ErrorEmbed(description=f"Log [ {log_entry.id} ] already invalidated."),
                                      ephemeral=True)
         else:
-            character: PlayerCharacter = await get_character_from_char_id(ctx.bot, log_entry.character_id)
+            character: PlayerCharacter = await get_active_character_from_char_id(ctx.bot, log_entry.character_id)
 
             if character is None:
                 return await ctx.respond(embed=ErrorEmbed(description=f"No active character found associated with "
