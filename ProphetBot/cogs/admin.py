@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 from os import listdir
 
 from ProphetBot.constants import ADMIN_GUILDS
-from ProphetBot.helpers import is_owner, is_admin
+from ProphetBot.helpers import is_owner, is_admin, get_adventure
 from ProphetBot.bot import BpBot
 
 log = logging.getLogger(__name__)
@@ -143,6 +143,39 @@ class Admin(commands.Cog):
             if file_name.endswith('.py'):
                 files.append(file_name[:-3])
         await ctx.respond("\n".join(files))
+
+    @commands.command(
+        name="spectator"
+    )
+    @commands.check(is_admin)
+    async def spectator_setup(self, ctx: ApplicationContext):
+        g: Guild = ctx.guild
+
+        quester_role = discord.utils.get(ctx.guild.roles, name="Quester")
+        spectator_role = discord.utils.get(ctx.guild.roles, name="Spectator")
+
+        if spectator_role is None or quester_role is None:
+            return await ctx.send(f"Issue finding roles")
+
+        for channel in g.channels:
+            overwrites = channel.overwrites
+
+            if quester_role in overwrites:
+                adventure = await get_adventure(ctx.bot, channel.category_id)
+
+                if adventure and adventure.end_ts is None:
+                    overwrites[quester_role] = discord.PermissionOverwrite(
+                        view_channel=overwrites[quester_role].send_messages,
+                        send_messages=overwrites[quester_role].send_messages
+                    )
+
+                    try:
+                        await channel.edit(overwrites=overwrites)
+                        await ctx.send(f"Updated: {channel.name}")
+                    except:
+                        await ctx.send(f"Issue updating: {channel.name}")
+
+
 
 
     # --------------------------- #
