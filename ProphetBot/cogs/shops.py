@@ -450,6 +450,10 @@ class Shops(commands.Cog):
             reason=f"Opening shop {name}"
         )
 
+        await shop_channel.send(f'{owner.mention} welcome to your new shop.\n'
+                                  f'Go ahead and set everything up.\n'
+                                  f'1. Make sure you can delete this message\n')
+
         shop = Shop(guild_id=ctx.guild_id, name=name, type=shop_type, owner_id=owner.id, channel_id=shop_channel.id,
                     shelf=shelf, network=network, mastery=mastery, seeks_remaining=1, max_cost=None, seek_roll=None,
                     active=True, inventory_rolled=False)
@@ -461,6 +465,10 @@ class Shops(commands.Cog):
 
         if shopkeep_role and (shopkeep_role not in owner.roles):
             await owner.add_roles(shopkeep_role, reason=f"Opening shop {name}")
+
+        if sub_role := discord.utils.get(ctx.guild.roles, name=shop_type.value):
+            if sub_role not in owner.roles:
+                await owner.add_roles(sub_role, reason=f"Opening shop {name}")
 
         log.info(f"Finished opening shop {name}")
 
@@ -533,6 +541,10 @@ class Shops(commands.Cog):
         if shopkeep_role and (shopkeep_role in owner.roles):
             await owner.remove_roles(shopkeep_role, reason=f"Closing shop {shop.name}")
 
+        if old_role := discord.utils.get(ctx.guild.roles, name=shop.type.value):
+            if old_role in owner.roles:
+                await owner.remove_roles(old_role, reason=f"Closing shop")
+
         return await ctx.respond(f'{shop.name}  owned by {owner.mention} closed.')
 
     @shop_admin.command(
@@ -552,6 +564,14 @@ class Shops(commands.Cog):
                                      ephemeral=True)
 
         s_type = ctx.bot.compendium.get_object("c_shop_type", type)
+
+        if old_role := discord.utils.get(ctx.guild.roles, name=shop.type.value):
+            if old_role in owner.roles:
+                await owner.remove_roles(old_role, reason=f"Converting shop")
+
+        if new_role := discord.utils.get(ctx.guild.roles, name=s_type.value):
+            if new_role not in owner.roles:
+                await owner.add_roles(new_role, reason=f"Converting shop")
 
         shop.type = s_type
         shop.inventory_rolled = False
@@ -581,7 +601,7 @@ async def sort_shops(ctx:ApplicationContext, text_category: CategoryChannel):
 
     channels =text_category.channels[:start]
 
-    channels = channels + s_shops["Consumable"] + s_shops["Blacksmith"] + s_shops["Magic"]
+    channels = channels + s_shops["Consumables"] + s_shops["Blacksmith"] + s_shops["Magic items"]
 
     if len(channels) != len(text_category.channels):
         log.error(f"Sort shops indexing issue. There are some non-shop channels intermixed")
