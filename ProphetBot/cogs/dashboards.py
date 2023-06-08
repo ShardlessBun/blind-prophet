@@ -242,6 +242,9 @@ class Dashboards(commands.Cog):
                         shop: Shop = ShopSchema(self.bot.compendium).load(row)
                         shop_dict[shop.type.value].append(shop)
 
+            for type in shop_dict:
+                shop_dict[type].sort(key = lambda x: x.name)
+
             return await original_message.edit(content='', embed=ShopDashboardEmbed(g, shop_dict))
 
         elif dType is not None and dType.value.upper() == "GUILD":
