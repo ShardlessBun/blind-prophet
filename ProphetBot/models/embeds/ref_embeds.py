@@ -35,7 +35,7 @@ class RpDashboardEmbed(Embed):
 
 
 class ShopDashboardEmbed(Embed):
-    def __init__(self, g: discord.Guild, shop_dict: Dict):
+    def __init__(self, compendium, g: discord.Guild, shop_dict: Dict):
         super(ShopDashboardEmbed, self).__init__(
             color=Color.dark_grey(),
             title=f"Open Establishments",
@@ -43,7 +43,10 @@ class ShopDashboardEmbed(Embed):
             timestamp=discord.utils.utcnow()
         )
 
-        for key in shop_dict:
+        sort_order = sorted([s.id for s in compendium.c_shop_type[0].values()])
+
+        for index in sort_order:
+            key = compendium.get_object("c_shop_type", index).value
             if len(shop_dict[key]) > 0:
                 value=""
                 for shop in shop_dict[key]:
