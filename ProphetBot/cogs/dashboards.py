@@ -245,7 +245,7 @@ class Dashboards(commands.Cog):
             for type in shop_dict:
                 shop_dict[type].sort(key = lambda x: x.name)
 
-            return await original_message.edit(content='', embed=ShopDashboardEmbed(g, shop_dict))
+            return await original_message.edit(content='', embed=ShopDashboardEmbed(self.bot.compendium, g, shop_dict))
 
         elif dType is not None and dType.value.upper() == "GUILD":
             dGuild: discord.Guild = dashboard.get_category_channel(self.bot).guild
