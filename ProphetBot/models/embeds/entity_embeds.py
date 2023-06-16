@@ -59,6 +59,7 @@ class CharacterGetEmbed(Embed):
                                  f"\u200b \u200b \u200b Level {character.get_level()} Arenas: "
                                  f"{pretty_completed_arenas}/{character.needed_arenas}")
 
+
 class PlayerCharactersEmbed(Embed):
     def __init__(self, player: Member, characters: list[PlayerCharacter]):
         super().__init__(title=f"Characters for {player.name}")
@@ -68,6 +69,7 @@ class PlayerCharactersEmbed(Embed):
                            value=f"**Level:** {char.get_level()}\n"
                                  f"**Reroll:** {char.reroll}\n"
                                  f"**Character ID:** {char.id}", inline=False)
+
 
 class HxLogEmbed(Embed):
     def __init__(self, log_ary: [DBLog], character: PlayerCharacter, ctx: ApplicationContext):
@@ -117,7 +119,7 @@ class DBLogEmbed(Embed):
 
         self.description = description
         self.set_thumbnail(url=player.display_avatar.url)
-        self.set_footer(text=f"Logged by {ctx.author} - ID: {log_entry.id}",
+        self.set_footer(text=f"Logged by {ctx.author.name} - ID: {log_entry.id}",
                         icon_url=ctx.author.display_avatar.url)  # TODO: Something wrong here
 
 
@@ -198,7 +200,7 @@ class AdventureEPEmbed(Embed):
             )
 
         self.set_thumbnail(url=THUMBNAIL)
-        self.set_footer(text=f"Logged by {ctx.author}",
+        self.set_footer(text=f"Logged by {ctx.author.name}",
                         icon_url=ctx.author.display_avatar.url)
 
 
@@ -256,7 +258,7 @@ class AdventureCloseEmbed(Embed):
         )
 
         self.set_thumbnail(url=THUMBNAIL)
-        self.set_footer(text=f"Logged by {ctx.author}",
+        self.set_footer(text=f"Logged by {ctx.author.name}",
                         icon_url=ctx.author.display_avatar.url)
 
 
@@ -293,8 +295,8 @@ class GuildStatus(Embed):
 
         in_count = 0 if inactive is None else len(inactive)
 
-        self.description +=f"\n **XP Goal: ** {g.get_xp_goal(total, inactive)} (*{g.get_xp_percent(total, inactive)}%*)\n" \
-                           f"**XP Adjust:** {g.xp_adjust}\n"
+        self.description += f"\n **XP Goal: ** {g.get_xp_goal(total, inactive)} (*{g.get_xp_percent(total, inactive)}%*)\n" \
+                            f"**XP Adjust:** {g.xp_adjust}\n"
 
         self.description += f"\n**Total Characters:** {total}\n" \
                             f"**Inactive Characters:** {in_count}\n" \
@@ -310,8 +312,9 @@ class GuildStatus(Embed):
             self.add_field(name="Inactive Characters",
                            value="\n".join([f"\u200b - {p.get_member_mention(ctx)}" for p in inactive]), inline=False)
 
+
 class GuildPace(Embed):
-    def __init__(self, ctx: ApplicationContext, g:PlayerGuild, pace: int, cur_week: int, xp_adj: int,
+    def __init__(self, ctx: ApplicationContext, g: PlayerGuild, pace: int, cur_week: int, xp_adj: int,
                  total: int, inactive: List[PlayerCharacter] | None):
         super().__init__(title=f"Level Pacing Simulation for - {ctx.guild.name}",
                          colour=Color.random())
@@ -335,17 +338,12 @@ class GuildPace(Embed):
         self.add_field(name="**Current Progress**",
                        value=f"**Current Adjustment:** {g.xp_adjust}\n"
                              f"**XP Goal:** {g.get_xp_goal(total, inactive)} (*{round(total_xp / g.get_xp_goal(total, inactive), 0)}%*)\n"
-                             f"**XP Deficit:** {total_xp - (g.get_xp_goal(total, inactive)/pace) * cur_week}", inline=False)
+                             f"**XP Deficit:** {total_xp - (g.get_xp_goal(total, inactive) / pace) * cur_week}",
+                       inline=False)
 
         self.add_field(name="**Requirements for Pace**",
                        value=f"**XP / Week:** {round(g.get_xp_goal(total, inactive) / pace, 2)} (*{round((100 / pace) * 100, 0)}%*)\n"
                              f"**XP Adjust required for pace:** {adjust}", inline=False)
-
-
-
-
-
-
 
 
 class BlacksmithItemEmbed(Embed):
@@ -450,7 +448,7 @@ class NewShopEmbed(Embed):
                                      f"**Shop Type:** {shop.type.value}")
 
         self.set_thumbnail(url=shop.get_owner(ctx).display_avatar.url)
-        self.set_footer(text=f"Created by {ctx.author}",
+        self.set_footer(text=f"Created by {ctx.author.name}",
                         icon_url=ctx.author.display_avatar.url)
 
 
@@ -470,6 +468,7 @@ class ShopEmbed(Embed):
 
         self.set_thumbnail(url=shop.get_owner(ctx).display_avatar.url)
 
+
 class ShopSeekEmbed(Embed):
     def __init__(self, shop: Shop, roll: RollResult, dc: int | None, phrase: str | None):
         super().__init__(title=f"{shop.name}",
@@ -486,7 +485,7 @@ class ShopSeekEmbed(Embed):
                            value=f"{str(roll)}\n\n"
                                  f"{result}")
         else:
-            self.description=f"{str(roll)}"
+            self.description = f"{str(roll)}"
 
         self.set_footer(text=f"{shop.seeks_remaining} / {shop.network + 1} seeks remaining")
 
@@ -501,10 +500,8 @@ class AdventuresEmbed(Embed):
         self.set_thumbnail(url=character.get_member(ctx).display_avatar.url)
 
         self.description = f'**Class:**' if len(class_ary) == 1 else f'**Classes:**'
-        self.description+= f"\n".join([f" {c.get_formatted_class()}" for c in class_ary])
-        self.description+=f'\n**Level:** {character.get_level()}'
-
-
+        self.description += f"\n".join([f" {c.get_formatted_class()}" for c in class_ary])
+        self.description += f'\n**Level:** {character.get_level()}'
 
         if len(adventures['player']) > 0:
             value = "\n".join([f'\u200b - {a.get_adventure_role(ctx).mention}' for a in adventures['player']])
@@ -513,7 +510,7 @@ class AdventuresEmbed(Embed):
 
         self.add_field(name=f"Player ({len(adventures['player'])})", value=value, inline=False)
 
-        if len(adventures['dm'])>0:
+        if len(adventures['dm']) > 0:
             self.add_field(name=f"DM ({len(adventures['dm'])})",
                            value="\n".join([f'\u200b - {a.get_adventure_role(ctx).mention}' for a in adventures['dm']]),
                            inline=False)
@@ -525,6 +522,3 @@ class AdventuresEmbed(Embed):
                     self.add_field(name=outString[0], value=outString[1], inline=False)
                 else:
                     self.add_field(name=outString[0], value="", inline=False)
-
-
-
