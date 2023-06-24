@@ -439,7 +439,7 @@ class Shops(commands.Cog):
         if shop_type is None:
             return await ctx.respond(embed=ErrorEmbed(description="Invalid shop type"), ephemeral=True)
 
-        chan_perms = dict()
+        chan_perms = ctx.channel.category.overwrites
         chan_perms[owner] = discord.PermissionOverwrite(manage_channels=True,
                                                         manage_messages=True)
 
