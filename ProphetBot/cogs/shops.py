@@ -455,7 +455,7 @@ class Shops(commands.Cog):
                                   f'1. Make sure you can delete this message\n')
 
         shop = Shop(guild_id=ctx.guild_id, name=name, type=shop_type, owner_id=owner.id, channel_id=shop_channel.id,
-                    shelf=shelf, network=network, mastery=mastery, seeks_remaining=1, max_cost=None, seek_roll=None,
+                    shelf=shelf, network=network, mastery=mastery, seeks_remaining=network+1, max_cost=None, seek_roll=None,
                     active=True, inventory_rolled=False)
 
         async with self.bot.db.acquire() as conn:

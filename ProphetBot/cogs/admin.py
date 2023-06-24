@@ -14,9 +14,9 @@ from ProphetBot.bot import BpBot
 log = logging.getLogger(__name__)
 
 
- # TODO: Command to modify item
- # TODO: Command to add item
- # TODO: Command to remove item
+# TODO: Command to modify item
+# TODO: Command to add item
+# TODO: Command to remove item
 
 def setup(bot: commands.Bot):
     bot.add_cog(Admin(bot))
@@ -144,39 +144,22 @@ class Admin(commands.Cog):
                 files.append(file_name[:-3])
         await ctx.respond("\n".join(files))
 
-    @commands.command(
-        name="spectator"
-    )
-    @commands.check(is_admin)
-    async def spectator_setup(self, ctx: ApplicationContext):
-        g: Guild = ctx.guild
+    @commands.command("overwrites")
+    @commands.check(is_owner)
+    async def overwrites(self, ctx: ApplicationContext):
+        str = f"**Channel Overwrites**\n"
 
-        quester_role = discord.utils.get(ctx.guild.roles, name="Quester")
-        spectator_role = discord.utils.get(ctx.guild.roles, name="Spectator")
+        for key in ctx.channel.overwrites:
+            str += f"{key.name.replace('@', '')}"
+            str += f" - {ctx.channel.overwrites[key]._values}\n"
 
-        if spectator_role is None or quester_role is None:
-            return await ctx.send(f"Issue finding roles")
+        str += f"\n\n**Category Overwrites**\n"
 
-        for channel in g.channels:
-            overwrites = channel.overwrites
+        for key in ctx.channel.category.overwrites:
+            str += f"{key.name.replace('@', '')}"
+            str += f"{ctx.channel.category.overwrites[key]._values}\n"
 
-            if quester_role in overwrites:
-                adventure = await get_adventure(ctx.bot, channel.category_id)
-
-                if adventure and adventure.end_ts is None:
-                    overwrites[quester_role] = discord.PermissionOverwrite(
-                        view_channel=overwrites[quester_role].send_messages,
-                        send_messages=overwrites[quester_role].send_messages
-                    )
-
-                    try:
-                        await channel.edit(overwrites=overwrites)
-                        await ctx.send(f"Updated: {channel.name}")
-                    except:
-                        await ctx.send(f"Issue updating: {channel.name}")
-
-
-
+        await ctx.send(str)
 
     # --------------------------- #
     # Private Methods
