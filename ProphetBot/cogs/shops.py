@@ -47,7 +47,6 @@ class Shops(commands.Cog):
         async with ctx.bot.db.acquire() as conn:
             await conn.execute(update_shop(shop))
 
-
         g: PlayerGuild = await get_or_create_guild(ctx.bot.db, ctx.guild_id)
 
         if shop.type.id == 1:  # Consumable
@@ -61,7 +60,7 @@ class Shops(commands.Cog):
             potion_items = list(ctx.bot.compendium.consumable[0].values())
 
             potion_stock = {'Potion of Healing': random.randint(1, 4)}
-            potion_stock.update(roll_stock(ctx.bot.compendium, g, potion_items, potion_qty, 4,shop.max_cost, 1))
+            potion_stock.update(roll_stock(ctx.bot.compendium, g, potion_items, potion_qty, 4, shop.max_cost, 1))
 
             potion_data = []
             for p in potion_stock:
@@ -180,7 +179,6 @@ class Shops(commands.Cog):
 
         g: PlayerGuild = await get_or_create_guild(ctx.bot.db, ctx.guild_id)
 
-
         if shop.type.id == 1 and (item_record := ctx.bot.compendium.get_object("consumable", item)):  # Consumable
             potion_table = Texttable()
             potion_table.set_cols_align(['l', 'c', 'l'])
@@ -225,7 +223,8 @@ class Shops(commands.Cog):
             scroll_table.add_rows(sort_stock(scroll_data), header=False)
 
             await ctx.delete()
-            await ctx.send(f'Re-rolling stock for {ctx.guild.get_channel(shop.channel_id).mention} replacing {item_record.name}')
+            await ctx.send(
+                f'Re-rolling stock for {ctx.guild.get_channel(shop.channel_id).mention} replacing {item_record.name}')
             await paginate(ctx, scroll_table.draw())
             return
 
@@ -268,7 +267,8 @@ class Shops(commands.Cog):
                 return ctx.respond(embed=ErrorEmbed("Can't reroll this item"), ephemeral=True)
 
             await ctx.delete()
-            await ctx.send(f'Re-rolling stock for {ctx.guild.get_channel(shop.channel_id).mention} replacing {item_record.name}')
+            await ctx.send(
+                f'Re-rolling stock for {ctx.guild.get_channel(shop.channel_id).mention} replacing {item_record.name}')
             await paginate(ctx, smith_table.draw())
             return
 
@@ -293,7 +293,8 @@ class Shops(commands.Cog):
             magic_table.add_rows(sort_stock(magic_data), header=False)
 
             await ctx.delete()
-            await ctx.send(f'Re-rolling stock for {ctx.guild.get_channel(shop.channel_id).mention} replacing {item_record.name}')
+            await ctx.send(
+                f'Re-rolling stock for {ctx.guild.get_channel(shop.channel_id).mention} replacing {item_record.name}')
             await paginate(ctx, magic_table.draw())
             return
         else:
@@ -362,8 +363,6 @@ class Shops(commands.Cog):
         async with self.bot.db.acquire() as conn:
             await conn.execute(update_shop(shop))
 
-
-
     @shop_commands.command(
         name="info",
         description="Get the information for a shop"
@@ -412,7 +411,6 @@ class Shops(commands.Cog):
 
         return await ctx.respond(embed=ShopEmbed(ctx, shop))
 
-
     @shop_admin.command(
         name="create",
         description="Opens a new shop"
@@ -451,11 +449,13 @@ class Shops(commands.Cog):
         )
 
         await shop_channel.send(f'{owner.mention} welcome to your new shop.\n'
-                                  f'Go ahead and set everything up.\n'
-                                  f'1. Make sure you can delete this message\n')
+                                f'Go ahead and set everything up.\n'
+                                f'1. Make sure you can delete this message\n'
+                                f'2. Set your seek roll using `/shop set_seek_roll:[roll]`')
 
         shop = Shop(guild_id=ctx.guild_id, name=name, type=shop_type, owner_id=owner.id, channel_id=shop_channel.id,
-                    shelf=shelf, network=network, mastery=mastery, seeks_remaining=network+1, max_cost=None, seek_roll=None,
+                    shelf=shelf, network=network, mastery=mastery, seeks_remaining=network + 1, max_cost=None,
+                    seek_roll=None,
                     active=True, inventory_rolled=False)
 
         async with self.bot.db.acquire() as conn:
@@ -589,7 +589,7 @@ class Shops(commands.Cog):
         await sort_shops(ctx, cat)
 
 
-async def sort_shops(ctx:ApplicationContext, text_category: CategoryChannel):
+async def sort_shops(ctx: ApplicationContext, text_category: CategoryChannel):
     shops = await get_all_shops(ctx.bot, ctx.guild.id)
     s_shops = {}
 
@@ -599,7 +599,7 @@ async def sort_shops(ctx:ApplicationContext, text_category: CategoryChannel):
 
     start = len(text_category.channels) - len(shops)
 
-    channels =text_category.channels[:start]
+    channels = text_category.channels[:start]
 
     channels = channels + s_shops["Consumables"] + s_shops["Blacksmith"] + s_shops["Magic items"]
 
@@ -608,7 +608,3 @@ async def sort_shops(ctx:ApplicationContext, text_category: CategoryChannel):
 
     for c in channels:
         await c.edit(position=channels.index(c))
-
-
-
-
