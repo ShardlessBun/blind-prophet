@@ -18,7 +18,7 @@ class NewCharacterEmbed(Embed):
                          description=f"**Player:** {player.mention}\n"
                                      f"**Race:** {character.get_formatted_race()}\n"
                                      f"**Class:** {char_class.get_formatted_class()}\n"
-                                     f"**Starting Gold:** {character.gold}\n"
+                                     f"**Starting Gold:** {character.gold:,}\n"
                                      f"**Starting Level:** {character.get_level()}\n",
                          color=discord.Color.random())
         self.set_thumbnail(url=player.display_avatar.url)
@@ -36,16 +36,16 @@ class CharacterGetEmbed(Embed):
         self.description += f"\n**Race: ** {character.get_formatted_race()}\n" \
                             f"**Faction:** {character.faction.value}\n" \
                             f"**Level:** {character.get_level()}\n" \
-                            f"**Experience:** {character.xp}\n" \
-                            f"**Wealth:** {character.gold} gp\n"
+                            f"**Experience:** {character.xp:,}\n" \
+                            f"**Wealth:** {character.gold:,} gp\n"
 
         faction_role = character.faction.get_faction_role(ctx)
         self.color = faction_role.color if faction_role else Color.dark_grey()
         self.set_thumbnail(url=character.get_member(ctx).display_avatar.url)
 
         self.add_field(name="Weekly Limits: ",
-                       value=f"\u200b \u200b \u200b Diversion GP: {character.div_gold}/{cap.max_gold}\n"
-                             f"\u200b \u200b \u200b Diversion XP: {character.div_xp}/{cap.max_xp}",
+                       value=f"\u200b \u200b \u200b Diversion GP: {character.div_gold:,}/{cap.max_gold:,}\n"
+                             f"\u200b \u200b \u200b Diversion XP: {character.div_xp:,}/{cap.max_xp:,}",
                        inline=False)
 
         if character.get_level() < 3:
@@ -88,9 +88,9 @@ class HxLogEmbed(Embed):
 
             value = f"**Author:** {author}\n" \
                     f"**Activity:** {log.activity.value}\n" \
-                    f"**Gold:** {log.gold}\n" \
-                    f"**XP:** {log.xp}\n" \
-                    f"**Server XP:** {log.server_xp}\n" \
+                    f"**Gold:** {log.gold:,}\n" \
+                    f"**XP:** {log.xp:,}\n" \
+                    f"**Server XP:** {log.server_xp:,}\n" \
                     f"**Invalidated?:** {log.invalid}\n"
 
             if log.notes is not None:
@@ -109,11 +109,11 @@ class DBLogEmbed(Embed):
         description = f"**Player:** {player.mention}\n"
         if show_amounts:
             if log_entry.gold is not None and log_entry.gold != 0:
-                description += f"**Gold:** {log_entry.gold}\n"
+                description += f"**Gold:** {log_entry.gold:,}\n"
             if log_entry.xp is not None and log_entry.xp != 0:
-                description += f"**Experience:** {log_entry.xp}\n"
+                description += f"**Experience:** {log_entry.xp:,}\n"
             if log_entry.server_xp is not None and log_entry.server_xp > 0:
-                description += f"**Server Experience Contributed:** {log_entry.server_xp}\n"
+                description += f"**Server Experience Contributed:** {log_entry.server_xp:,}\n"
         if hasattr(log_entry, "notes") and log_entry.notes is not None:
             description += f"**Notes:** {log_entry.notes}\n"
 
@@ -177,8 +177,8 @@ class AdventureEPEmbed(Embed):
             title="Adventure Rewards",
             description=f"**Adventure:** {adventure.name}\n"
                         f"**Adventure Tier:** {adventure.tier.id}\n"
-                        f"**EP Earned:** {ep}\n"
-                        f"**EP Earned to date:** {adventure.ep}\n"
+                        f"**EP Earned:** {ep:,}\n"
+                        f"**EP Earned to date:** {adventure.ep:,}\n"
                         f"*Note: Rewards are 1/2 of your diversion caps for each EP*\n",
             color=Color.random()
         )
@@ -210,7 +210,7 @@ class AdventureStatusEmbed(Embed):
             title=f"Adventure Status - {adventure.name}",
             description=f"**Adventure Role:** {adventure.get_adventure_role(ctx).mention}\n"
                         f"**Adventure Tier:** {adventure.tier.id}\n"
-                        f"**EP Earned to date:** {adventure.ep}\n",
+                        f"**EP Earned to date:** {adventure.ep:,}\n",
             color=Color.random()
         )
 
@@ -239,7 +239,7 @@ class AdventureCloseEmbed(Embed):
             title="Adventure Complete!",
             description=f"**Adventure:** {adventure.name}\n"
                         f"**Tier:** {adventure.tier.id}\n"
-                        f"**Total EP:** {adventure.ep}\n"
+                        f"**Total EP:** {adventure.ep:,}\n"
         )
         self.add_field(
             name="DM(s)",
@@ -271,7 +271,7 @@ class GuildEmbed(Embed):
         self.add_field(name="**Settings**",
                        value=f"**Max Level:** {g.max_level}\n"
                              f"**Max Rerolls:** {g.max_reroll}\n"
-                             f"**XP Adjust:** {g.xp_adjust}",
+                             f"**XP Adjust:** {g.xp_adjust:,}",
                        inline=False)
 
         if g.reset_hour is not None:
@@ -286,17 +286,17 @@ class GuildStatus(Embed):
         super().__init__(title=f"Server Info - {ctx.guild.name}",
                          color=Color.random(),
                          description=f"**Max Level:** {g.max_level}\n"
-                                     f"**Server XP:** {g.server_xp}\n"
-                                     f"**Week XP:** {g.week_xp}\n"
-                                     f"**Total XP:** {g.total_xp()}\n"
-                                     f"**\# Weeks:** {g.weeks}\n")
+                                     f"**Server XP:** {g.server_xp:,}\n"
+                                     f"**Week XP:** {g.week_xp:,}\n"
+                                     f"**Total XP:** {g.total_xp():,}\n"
+                                     f"**\# Weeks:** {g.weeks:,}\n")
 
         self.set_thumbnail(url=THUMBNAIL)
 
         in_count = 0 if inactive is None else len(inactive)
 
-        self.description += f"\n **XP Goal: ** {g.get_xp_goal(total, inactive)} (*{g.get_xp_percent(total, inactive)}%*)\n" \
-                            f"**XP Adjust:** {g.xp_adjust}\n"
+        self.description += f"\n **XP Goal: ** {g.get_xp_goal(total, inactive):,} (*{g.get_xp_percent(total, inactive)}%*)\n" \
+                            f"**XP Adjust:** {g.xp_adjust:,}\n"
 
         self.description += f"\n**Total Characters:** {total}\n" \
                             f"**Inactive Characters:** {in_count}\n" \
@@ -330,19 +330,19 @@ class GuildPace(Embed):
                            f"**Active Players:** {act_players}\n" \
                            f"**Desired pace:** {pace} weeks\n" \
                            f"**Weeks left to level:** {pace - cur_week} week(s)\n" \
-                           f"**Current XP:** {g.total_xp()}\n"
+                           f"**Current XP:** {g.total_xp():,}\n"
 
         if xp_adj:
-            self.description += f"**Adjusted XP:** {total_xp}"
+            self.description += f"**Adjusted XP:** {total_xp:,}"
 
         self.add_field(name="**Current Progress**",
-                       value=f"**Current Adjustment:** {g.xp_adjust}\n"
-                             f"**XP Goal:** {g.get_xp_goal(total, inactive)} (*{round(total_xp / g.get_xp_goal(total, inactive), 0)}%*)\n"
+                       value=f"**Current Adjustment:** {g.xp_adjust:,}\n"
+                             f"**XP Goal:** {g.get_xp_goal(total, inactive):,} (*{round(total_xp / g.get_xp_goal(total, inactive), 0)}%*)\n"
                              f"**XP Deficit:** {total_xp - (g.get_xp_goal(total, inactive) / pace) * cur_week}",
                        inline=False)
 
         self.add_field(name="**Requirements for Pace**",
-                       value=f"**XP / Week:** {round(g.get_xp_goal(total, inactive) / pace, 2)} (*{round((100 / pace) * 100, 0)}%*)\n"
+                       value=f"**XP / Week:** {round(g.get_xp_goal(total, inactive) / pace, 2):,} (*{round((100 / pace) * 100, 0)}%*)\n"
                              f"**XP Adjust required for pace:** {adjust}", inline=False)
 
 
@@ -352,7 +352,7 @@ class BlacksmithItemEmbed(Embed):
                          color=Color.random(),
                          description=f"**Type:** {item.sub_type.value}\n"
                                      f"**Rarity:** {item.rarity.value}\n"
-                                     f"**Cost:** {item.display_cost()} gp\n"
+                                     f"**Cost:** {item.display_cost():,} gp\n"
                                      f"**Shop:** Blacksmith\n")
 
         if item.attunement:
@@ -376,7 +376,7 @@ class MagicItemEmbed(Embed):
         super().__init__(title=f"{item.name}",
                          color=Color.random(),
                          description=f"**Rarity:** {item.rarity.value}\n"
-                                     f"**Cost:** {item.cost} gp\n"
+                                     f"**Cost:** {item.cost:,} gp\n"
                                      f"**Shop:** Magic Items\n")
 
         if item.attunement:
@@ -401,7 +401,7 @@ class ConsumableItemEmbed(Embed):
                          color=Color.random(),
                          description=f"**Type:** {item.sub_type.value}\n"
                                      f"**Rarity:** {item.rarity.value}\n"
-                                     f"**Cost:** {item.cost} gp\n"
+                                     f"**Cost:** {item.cost:,} gp\n"
                                      f"**Shop:** Consumables\n")
 
         if item.attunement:
@@ -426,7 +426,7 @@ class ScrollItemEmbed(Embed):
                          color=Color.random(),
                          description=f"**Type:** Scroll\n"
                                      f"**Rarity:** {item.rarity.value}\n"
-                                     f"**Cost:** {item.cost} gp\n"
+                                     f"**Cost:** {item.cost:,} gp\n"
                                      f"**School:** {item.school.value}\n"
                                      f"**Shop:** Consumables\n")
 
