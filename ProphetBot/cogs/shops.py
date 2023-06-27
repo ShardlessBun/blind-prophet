@@ -538,14 +538,15 @@ class Shops(commands.Cog):
 
         shopkeep_role = discord.utils.get(ctx.guild.roles, name="Shopkeeper")
 
-        if shopkeep_role and (shopkeep_role in owner.roles):
-            await owner.remove_roles(shopkeep_role, reason=f"Closing shop {shop.name}")
+        if hasattr(owner, "roles"):
+            if shopkeep_role and (shopkeep_role in owner.roles):
+                await owner.remove_roles(shopkeep_role, reason=f"Closing shop {shop.name}")
 
-        if old_role := discord.utils.get(ctx.guild.roles, name=shop.type.value):
-            if old_role in owner.roles:
-                await owner.remove_roles(old_role, reason=f"Closing shop")
+            if old_role := discord.utils.get(ctx.guild.roles, name=shop.type.value):
+                if old_role in owner.roles:
+                    await owner.remove_roles(old_role, reason=f"Closing shop")
 
-        return await ctx.respond(f'{shop.name}  owned by {owner.mention} closed.')
+        return await ctx.respond(f'{shop.name}  owned by {owner.mention if hasattr(owner, "mention") else owner} closed.')
 
     @shop_admin.command(
         name="convert",
