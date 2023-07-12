@@ -376,6 +376,8 @@ class Adventures(commands.Cog):
             return await ctx.respond(f"Error: No adventure associated with this channel")
         elif ctx.author.id not in adventure.dms:
             return await ctx.respond(f"Error: You are not a DM of this adventure")
+        elif player.id in adventure.dms:
+            return await ctx.respond(f"Error: You can't remove a DM this way")
         else:
             adventure_role = adventure.get_adventure_role(ctx)
             if adventure_role not in player.roles:
