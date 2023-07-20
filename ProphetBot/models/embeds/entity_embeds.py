@@ -352,7 +352,7 @@ class BlacksmithItemEmbed(Embed):
                          color=Color.random(),
                          description=f"**Type:** {item.sub_type.value}\n"
                                      f"**Rarity:** {item.rarity.value}\n"
-                                     f"**Cost:** {item.display_cost():,} gp\n"
+                                     f"**Cost:** {item.display_cost()} gp\n"
                                      f"**Shop:** Blacksmith\n")
 
         if item.attunement:
