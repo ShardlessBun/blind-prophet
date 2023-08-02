@@ -13,11 +13,6 @@ from ProphetBot.bot import BpBot
 
 log = logging.getLogger(__name__)
 
-
-# TODO: Command to modify item
-# TODO: Command to add item
-# TODO: Command to remove item
-
 def setup(bot: commands.Bot):
     bot.add_cog(Admin(bot))
 
