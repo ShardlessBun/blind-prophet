@@ -94,7 +94,7 @@ class Events(commands.Cog):
             channels = re.findall(pattern, message)
             for c in channels:
                 ch = discord.utils.get(member.guild.channels, name=c)
-                message = message.replace("{#"+c+"}", f"{ch.mention}") if ch.mention else message
+                message = message.replace("{#"+c+"}", f"{ch.mention}") if ch else message
 
             message = message.replace("{user}", f"{member.mention}")
 
