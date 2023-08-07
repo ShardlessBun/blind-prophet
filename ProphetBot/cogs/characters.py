@@ -555,8 +555,8 @@ class Character(commands.Cog):
 
         # Role cleanup
         current_faction_roles = get_faction_roles(ctx.bot.compendium, player)
-        current_faction_roles = list(filter(lambda r: r.name != "Guild Initiate", current_faction_roles))
-        if current_faction_roles is not None:
+        current_faction_roles = list(filter(lambda r: r.name != "Guild Initiate", current_faction_roles)) if current_faction_roles else current_faction_roles
+        if current_faction_roles:
             await player.remove_roles(*current_faction_roles, reason=f"Player Reroll")
 
         # Inital Log
