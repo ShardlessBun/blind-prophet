@@ -84,7 +84,7 @@ async def on_application_command_error(ctx: ApplicationContext, error):
     if isinstance(error, discord.errors.CheckFailure):
         return await ctx.respond(f'You do not have required permissions for `{ctx.command}`')
     if isinstance(error.original, AttributeError):
-        log.warning(f"Attribue Errror: '{}'".format(error))
+        log.warning("Attribue Errror: '{}'".format(error))
         return await ctx.respond(f"Try again in a minute, and if doesn't work let us know")
     else:
         log.warning("Error in command: '{}'".format(ctx.command))
