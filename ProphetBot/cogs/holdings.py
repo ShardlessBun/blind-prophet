@@ -57,6 +57,15 @@ class Holdings(commands.Cog):
             chan_perms[guild_initiate] = discord.PermissionOverwrite(view_channel=True,
                                                                      send_messages=False)
 
+        if magewright := discord.utils.get(ctx.guild.roles, name="Magewright"):
+            chan_perms[magewright] = discord.PermissionOverwrite(view_channel=True,
+                                                                 send_messages=True)
+
+        if moderator := discord.utils.get(ctx.guild.roles, name="Moderator"):
+            chan_perms[moderator] = discord.PermissionOverwrite(view_channel=True,
+                                                                manage_messages=True,
+                                                                send_messages=True)
+
 
         holding_chanel = await ctx.guild.create_text_channel(
             name=name,
