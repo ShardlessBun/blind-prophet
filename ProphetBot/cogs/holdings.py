@@ -37,6 +37,7 @@ class Holdings(commands.Cog):
         chan_perms = dict()
 
         chan_perms[owner] = discord.PermissionOverwrite(view_channel=True,
+                                                        manage_channels=True,
                                                         manage_messages=True,
                                                         send_messages=True)
         if owner_2 is not None:
@@ -57,6 +58,15 @@ class Holdings(commands.Cog):
             chan_perms[guild_initiate] = discord.PermissionOverwrite(view_channel=True,
                                                                      send_messages=False)
 
+        if magewright := discord.utils.get(ctx.guild.roles, name="Magewright"):
+            chan_perms[magewright] = discord.PermissionOverwrite(view_channel=True,
+                                                                 send_messages=True)
+
+        if moderator := discord.utils.get(ctx.guild.roles, name="Moderator"):
+            chan_perms[moderator] = discord.PermissionOverwrite(view_channel=True,
+                                                                manage_messages=True,
+                                                                send_messages=True)
+
 
         holding_chanel = await ctx.guild.create_text_channel(
             name=name,
@@ -68,7 +78,7 @@ class Holdings(commands.Cog):
         await holding_chanel.send(f'{owner.mention} welcome to your new holding.\n'
                                   f'Go ahead and set everything up.\n'
                                   f'1. Make sure you can delete this message\n'
-                                  f'2. `/room view view:Open allow_post:true` to open the holding up for visitors!')
+                                  f'2. `/room view view:Open post:true` to open the holding up for visitors!')
         await ctx.delete()
 
     @holding_admin.command(
