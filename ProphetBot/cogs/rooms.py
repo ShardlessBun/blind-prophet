@@ -92,8 +92,8 @@ class Room(commands.Cog):
     async def room_open(self, ctx: ApplicationContext,
                         view: Option(str, description="Open or close the room", choices=['open', 'close'],
                                      required=True),
-                        allow_quester: Option(bool, description="Whether to allow public posts", required=False,
-                                              default=False)):
+                        post: Option(bool, description="Whether to allow public posts", required=False,
+                                     default=False)):
         await ctx.defer()
 
         adventure: Adventure = await get_adventure(ctx.bot, ctx.channel.category_id)
@@ -106,15 +106,15 @@ class Room(commands.Cog):
                 if ctx.author in overwrites or is_admin(ctx):
                     if guild_member := discord.utils.get(ctx.guild.roles, name="Guild Member"):
                         overwrites[guild_member] = discord.PermissionOverwrite(view_channel=room_view,
-                                                                               send_messages=allow_quester)
+                                                                               send_messages=post)
 
                     if guild_initiate := discord.utils.get(ctx.guild.roles, name="Guild Initiate"):
                         overwrites[guild_initiate] = discord.PermissionOverwrite(view_channel=room_view,
-                                                                                 send_messages=allow_quester)
+                                                                                 send_messages=post)
 
                     await ctx.channel.edit(overwrites=overwrites)
 
-                    if allow_quester:
+                    if post:
                         return await ctx.respond(f"{ctx.channel.mention} is now {val} and able to be posted in")
                     else:
                         return await ctx.respond(f"{ctx.channel.mention} is now {val}")
@@ -132,8 +132,8 @@ class Room(commands.Cog):
             overwrites = ctx.channel.overwrites
 
             if quester_role := discord.utils.get(ctx.guild.roles, name="Quester"):
-                overwrites[quester_role] = discord.PermissionOverwrite(view_channel=allow_quester,
-                                                                       send_messages=allow_quester)
+                overwrites[quester_role] = discord.PermissionOverwrite(view_channel=post,
+                                                                       send_messages=post)
 
             if spectator_role := discord.utils.get(ctx.guild.roles, name="Spectator"):
                 overwrites[spectator_role] = discord.PermissionOverwrite(view_channel=room_view)
@@ -142,7 +142,7 @@ class Room(commands.Cog):
                 await ctx.channel.edit(overwrites=overwrites)
 
                 response = f"{ctx.channel.mention} is now {val} to {spectator_role.mention} " \
-                           f"{f' and able to be posted in by {quester_role.mention}.' if allow_quester else f' and closed to {quester_role.mention}'}"
+                           f"{f' and able to be posted in by {quester_role.mention}.' if post else f' and closed to {quester_role.mention}'}"
             else:
                 response = "Couldn't find the @Quester and the @Spectator role"
 
