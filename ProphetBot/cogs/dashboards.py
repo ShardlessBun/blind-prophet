@@ -39,6 +39,62 @@ class Dashboards(commands.Cog):
         log.info(f"Reloading dashboards every {DASHBOARD_REFRESH_INTERVAL} minutes.")
         await self.update_dashboards.start()
 
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if cat_channel := message.channel.category_id:
+            async with self.bot.db.acquire() as conn:
+                dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(cat_channel, self.bot.db)
+
+            if not dashboard or message.channel.id in dashboard.excluded_channel_ids:
+                return
+
+            dashboard_message = await dashboard.get_pinned_post(self.bot)
+
+            if dashboard_message is None or not dashboard_message.pinned:
+                async with self.bot.db.acquire() as conn:
+                    return await conn.execute(delete_dashboard(dashboard))
+
+            dType: DashboardType = self.bot.compendium.get_object("c_dashboard_type", dashboard.dashboard_type)
+            g: discord.Guild = dashboard.get_category_channel(self.bot).guild
+
+            if dType is None:
+                return
+            elif dType.value.upper() == "RP":
+                channels_dict = {
+                    "Magewright": [y.replace('\u200b', '').replace('<#','').replace('>','') for y in [x.value if "Magewright" in x.name else "" for x in dashboard_message.embeds[0].fields][0].split('\n')],
+                    "Available": [y.replace('\u200b', '').replace('<#','').replace('>','') for y in [x.value for x in dashboard_message.embeds[0].fields if "Available" in x.name][0].split('\n')],
+                    "In Use": [y.replace('\u200b', '').replace('<#','').replace('>','') for y in [x.value for x in dashboard_message.embeds[0].fields if "Unavailable" in x.name][0].split('\n')]
+                }
+
+            channel_id = str(message.channel.id)
+            if not message.content or message.content in ["```\n​\n```", "```\n \n```"]:
+                if channel_id in channels_dict["Available"]:
+                    return
+
+                channels_dict["Magewright"].remove(channel_id) if channel_id in channels_dict["Magewright"] else None
+                channels_dict["In Use"].remove(channel_id) if channel_id in channels_dict["In Use"] else None
+                channels_dict["Available"].append(channel_id)
+
+                return await dashboard_message.edit(content='', embed=RpDashboardEmbed(channels_dict, message.channel.category.name))
+
+            elif (magewright_role := discord.utils.get(g.roles, name="Magewright")) and magewright_role.mention in message.content:
+                if channel_id in channels_dict["Magewright"]:
+                    return
+
+                channels_dict["Magewright"].append(channel_id)
+                channels_dict["In Use"].remove(channel_id) if channel_id in channels_dict["In Use"] else None
+                channels_dict["Available"].remove(channel_id) if channel_id in channels_dict["Available"] else None
+
+                return await dashboard_message.edit(content='', embed=RpDashboardEmbed(channels_dict, message.channel.category.name))
+
+            elif channel_id not in channels_dict["In Use"]:
+                channels_dict["Magewright"].remove(channel_id) if channel_id in channels_dict["Magewright"] else None
+                channels_dict["In Use"].append(channel_id)
+                channels_dict["Available"].remove(channel_id) if channel_id in channels_dict["Available"] else None
+
+                return await dashboard_message.edit(content='', embed=RpDashboardEmbed(channels_dict, message.channel.category.name))
+        return
+
     @dashboard_commands.command(
         name="rp_create",
         description="Creates a dashboard which shows the status of RP channels in this category"
@@ -67,7 +123,8 @@ class Dashboards(commands.Cog):
 
         await ctx.defer()
 
-        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx)
+        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx.channel.category_id,
+                                                                                       ctx.bot.db)
 
         if dashboard is not None:
             return await ctx.respond(embed=ErrorEmbed(description="There is already a dashboard for this category. "
@@ -220,11 +277,11 @@ class Dashboards(commands.Cog):
                 last_message = await get_last_message(c)
 
                 if last_message is None or last_message.content in ["```\n​\n```", "```\n \n```"]:
-                    channels_dict["Available"].append(c.mention)
+                    channels_dict["Available"].append(c.id)
                 elif magewright_role is not None and magewright_role.mention in last_message.content:
-                    channels_dict["Magewright"].append(c.mention)
+                    channels_dict["Magewright"].append(c.id)
                 else:
-                    channels_dict["In Use"].append(c.mention)
+                    channels_dict["In Use"].append(c.id)
 
             category = dashboard.get_category_channel(self.bot)
             return await original_message.edit(content='', embed=RpDashboardEmbed(channels_dict, category.name))
@@ -243,7 +300,7 @@ class Dashboards(commands.Cog):
                         shop_dict[shop.type.value].append(shop)
 
             for type in shop_dict:
-                shop_dict[type].sort(key = lambda x: x.name)
+                shop_dict[type].sort(key=lambda x: x.name)
 
             return await original_message.edit(content='', embed=ShopDashboardEmbed(self.bot.compendium, g, shop_dict))
 
@@ -253,7 +310,7 @@ class Dashboards(commands.Cog):
             total, inactive = await get_guild_character_summary_stats(self.bot, dGuild.id)
 
             try:
-                progress=g.get_xp_float(total, inactive) if g.get_xp_float(total, inactive) <= 1 else 1
+                progress = g.get_xp_float(total, inactive) if g.get_xp_float(total, inactive) <= 1 else 1
             except ZeroDivisionError:
                 return
 
@@ -262,12 +319,12 @@ class Dashboards(commands.Cog):
             height = int(width * .15)
             scale = .86
 
-            out = Image.new("RGBA", (width,height), (0,0,0,0))
+            out = Image.new("RGBA", (width, height), (0, 0, 0, 0))
             d = ImageDraw.Draw(out)
-            d = draw_progress_bar(d, 0, 0, int(width*scale), int(height*scale), progress)
+            d = draw_progress_bar(d, 0, 0, int(width * scale), int(height * scale), progress)
             sharp_out = out.filter(ImageFilter.SHARPEN)
 
-            embed=GuildProgress(dGuild.name)
+            embed = GuildProgress(dGuild.name)
 
             with io.BytesIO() as output:
                 sharp_out.save(output, format="PNG")
@@ -276,7 +333,6 @@ class Dashboards(commands.Cog):
                 embed.set_image(url="attachment://image.png")
 
                 return await original_message.edit(file=file, embed=embed, content='')
-
 
     # --------------------------- #
     # Tasks

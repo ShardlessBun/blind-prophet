@@ -12,13 +12,13 @@ from ProphetBot.queries import get_dashboard_by_category_channel, get_weekly_sti
     get_active_global, get_global_player, delete_global_event, delete_global_players
 
 
-async def get_dashboard_from_category_channel_id(ctx: ApplicationContext) -> RefCategoryDashboard | None:
-    category_channel_id = ctx.channel.category_id
+async def get_dashboard_from_category_channel_id(category_channel_id: int, db: aiopg.sa.Engine) -> RefCategoryDashboard | None:
+    # category_channel_id = ctx.channel.category_id
 
     if category_channel_id is None:
         return None
 
-    async with ctx.bot.db.acquire() as conn:
+    async with db.acquire() as conn:
         results = await conn.execute(get_dashboard_by_category_channel(category_channel_id))
         row = await results.first()
 
@@ -27,7 +27,6 @@ async def get_dashboard_from_category_channel_id(ctx: ApplicationContext) -> Ref
     else:
         dashboard: RefCategoryDashboard = RefCategoryDashboardSchema().load(row)
         return dashboard
-
 
 async def get_last_message(channel: TextChannel) -> discord.Message | None:
     last_message = channel.last_message

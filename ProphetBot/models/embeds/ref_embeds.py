@@ -15,6 +15,11 @@ class RpDashboardEmbed(Embed):
             title=f"Channel Statuses - {category_name}",
             timestamp=discord.utils.utcnow()
         )
+
+        for k in channel_statuses:
+            channel_statuses[k] = [f"<#{x}>" if x != "" else "" for x in channel_statuses[k]]
+            channel_statuses[k].remove("") if "" in channel_statuses[k] else ""
+
         if len(channel_statuses["Magewright"]) > 0:
             self.add_field(
                 name="<:pencil:989284061786808380> -- Awaiting Magewright",
