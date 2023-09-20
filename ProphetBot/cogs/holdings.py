@@ -97,7 +97,9 @@ class Holdings(commands.Cog):
 
         if modify=="Add":
             chan_perms[owner] = discord.PermissionOverwrite(view_channel=True,
-                                                            manage_messages=True)
+                                                            manage_messages=True,
+                                                            manage_channels=True,
+                                                            send_messages=True)
             phrase = "added as an owner!"
         elif modify=="Remove":
             phrase = "removed as an owner"
