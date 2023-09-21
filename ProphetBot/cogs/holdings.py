@@ -3,7 +3,7 @@ import logging
 import discord
 from discord import SlashCommandGroup, ApplicationContext, Member, Option, CategoryChannel, TextChannel
 from discord.ext import commands
-from ProphetBot.bot import  BpBot
+from ProphetBot.bot import BpBot
 from ProphetBot.helpers import is_admin
 from ProphetBot.models.embeds import ErrorEmbed
 
@@ -17,7 +17,6 @@ def setup(bot: commands.Bot):
 class Holdings(commands.Cog):
     bot: BpBot
     holding_admin = SlashCommandGroup("holding_admin", "Commands related to holding administration")
-
 
     @holding_admin.command(
         name="create",
@@ -67,7 +66,6 @@ class Holdings(commands.Cog):
                                                                 manage_messages=True,
                                                                 send_messages=True)
 
-
         holding_chanel = await ctx.guild.create_text_channel(
             name=name,
             category=category_channel,
@@ -79,7 +77,7 @@ class Holdings(commands.Cog):
                                   f'Go ahead and set everything up.\n'
                                   f'1. Make sure you can delete this message\n'
                                   f'2. `/room view view:Open post:true` to open the holding up for visitors!')
-        await ctx.delete()
+        return await ctx.delete()
 
     @holding_admin.command(
         name="modify_owner",
@@ -89,24 +87,28 @@ class Holdings(commands.Cog):
     async def holding_modify(self, ctx: ApplicationContext,
                              owner: Option(Member, description="Owner to add/remove", required=True),
                              channel: Option(TextChannel, description="Holding to modify", required=True),
-                             modify: Option(str, description="Add/remove owner. Default: Add", choices=["Add", "Remove"],
+                             modify: Option(str, description="Add/remove owner. Default: Add",
+                                            choices=["Add", "Remove"],
                                             required=False, default="Add")):
         await ctx.defer()
 
         chan_perms = channel.overwrites
 
-        if modify=="Add":
+        if modify == "Add":
             chan_perms[owner] = discord.PermissionOverwrite(view_channel=True,
-                                                            manage_messages=True)
+                                                            manage_channels=True,
+                                                            manage_messages=True,
+                                                            send_messages=True)
             phrase = "added as an owner!"
-        elif modify=="Remove":
+        elif modify == "Remove":
             phrase = "removed as an owner"
             del chan_perms[owner]
         else:
             return await ctx.respond(embed=ErrorEmbed(description="Error: Something is wrong with the parameters."),
-                                                      ephemeral=True)
+                                     ephemeral=True)
 
         await channel.edit(overwrites=chan_perms)
 
         await channel.send(f"{owner.mention} {phrase}.")
 
+        return await ctx.delete()
