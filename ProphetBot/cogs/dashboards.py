@@ -66,33 +66,33 @@ class Dashboards(commands.Cog):
                     "In Use": [y.replace('\u200b', '').replace('<#','').replace('>','') for y in [x.value for x in dashboard_message.embeds[0].fields if "Unavailable" in x.name][0].split('\n')]
                 }
 
-            channel_id = str(message.channel.id)
-            if not message.content or message.content in ["```\n​\n```", "```\n \n```"]:
-                if channel_id in channels_dict["Available"]:
-                    return
+                channel_id = str(message.channel.id)
+                if not message.content or message.content in ["```\n​\n```", "```\n \n```"]:
+                    if channel_id in channels_dict["Available"]:
+                        return
 
-                channels_dict["Magewright"].remove(channel_id) if channel_id in channels_dict["Magewright"] else None
-                channels_dict["In Use"].remove(channel_id) if channel_id in channels_dict["In Use"] else None
-                channels_dict["Available"].append(channel_id)
+                    channels_dict["Magewright"].remove(channel_id) if channel_id in channels_dict["Magewright"] else None
+                    channels_dict["In Use"].remove(channel_id) if channel_id in channels_dict["In Use"] else None
+                    channels_dict["Available"].append(channel_id)
 
-                return await dashboard_message.edit(content='', embed=RpDashboardEmbed(channels_dict, message.channel.category.name))
+                    return await dashboard_message.edit(content='', embed=RpDashboardEmbed(channels_dict, message.channel.category.name))
 
-            elif (magewright_role := discord.utils.get(g.roles, name="Magewright")) and magewright_role.mention in message.content:
-                if channel_id in channels_dict["Magewright"]:
-                    return
+                elif (magewright_role := discord.utils.get(g.roles, name="Magewright")) and magewright_role.mention in message.content:
+                    if channel_id in channels_dict["Magewright"]:
+                        return
 
-                channels_dict["Magewright"].append(channel_id)
-                channels_dict["In Use"].remove(channel_id) if channel_id in channels_dict["In Use"] else None
-                channels_dict["Available"].remove(channel_id) if channel_id in channels_dict["Available"] else None
+                    channels_dict["Magewright"].append(channel_id)
+                    channels_dict["In Use"].remove(channel_id) if channel_id in channels_dict["In Use"] else None
+                    channels_dict["Available"].remove(channel_id) if channel_id in channels_dict["Available"] else None
 
-                return await dashboard_message.edit(content='', embed=RpDashboardEmbed(channels_dict, message.channel.category.name))
+                    return await dashboard_message.edit(content='', embed=RpDashboardEmbed(channels_dict, message.channel.category.name))
 
-            elif channel_id not in channels_dict["In Use"]:
-                channels_dict["Magewright"].remove(channel_id) if channel_id in channels_dict["Magewright"] else None
-                channels_dict["In Use"].append(channel_id)
-                channels_dict["Available"].remove(channel_id) if channel_id in channels_dict["Available"] else None
+                elif channel_id not in channels_dict["In Use"]:
+                    channels_dict["Magewright"].remove(channel_id) if channel_id in channels_dict["Magewright"] else None
+                    channels_dict["In Use"].append(channel_id)
+                    channels_dict["Available"].remove(channel_id) if channel_id in channels_dict["Available"] else None
 
-                return await dashboard_message.edit(content='', embed=RpDashboardEmbed(channels_dict, message.channel.category.name))
+                    return await dashboard_message.edit(content='', embed=RpDashboardEmbed(channels_dict, message.channel.category.name))
         return
 
     @dashboard_commands.command(
