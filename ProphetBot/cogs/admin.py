@@ -26,10 +26,13 @@ class Admin(commands.Cog):
         log.info(f'Cog \'Admin\' loaded')
 
     @commands.Cog.listener()
-    async def on_ready(self):
-        await asyncio.sleep(3.0)
+    async def on_db_connected(self):
+        # await asyncio.sleep(3.0)
         asyncio.ensure_future(self.reload_category_task.start())
-        await asyncio.sleep(6.0)
+
+    @commands.Cog.listener()
+    async def on_compendium_loaded(self):
+        # await asyncio.sleep(6.0)
         asyncio.ensure_future(self.reload_item_task.start())
 
     @admin_commands.command(

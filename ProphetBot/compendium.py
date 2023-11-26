@@ -112,6 +112,7 @@ class Compendium:
 
         end = timer()
         log.info(f'COMPENDIUM: Categories reloaded in [ {end - start:.2f} ]s')
+        bot.dispatch("compendium_loaded")
 
     async def load_items(self, bot):
         if not hasattr(bot, "db"):
@@ -130,6 +131,7 @@ class Compendium:
 
             end = timer()
             log.info(f"COMPENDIUM: Items reloaded in [ {end - start:.2f} ]s")
+            bot.dispatch("items_loaded")
 
     def get_object(self, node: str, value: str | int = None):
         if hasattr(self, node):
