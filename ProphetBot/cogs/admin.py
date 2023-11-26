@@ -27,13 +27,13 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener()
     async def on_db_connected(self):
-        # await asyncio.sleep(3.0)
-        asyncio.ensure_future(self.reload_category_task.start())
+        if not self.reload_category_task.is_running():
+            asyncio.ensure_future(self.reload_category_task.start())
 
     @commands.Cog.listener()
     async def on_compendium_loaded(self):
-        # await asyncio.sleep(6.0)
-        asyncio.ensure_future(self.reload_item_task.start())
+        if not self.reload_item_task.is_running():
+            asyncio.ensure_future(self.reload_item_task.start())
 
     @admin_commands.command(
         name="load",
