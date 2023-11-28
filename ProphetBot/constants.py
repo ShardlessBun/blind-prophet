@@ -15,3 +15,4 @@ DB_URL = os.environ.get("DATABASE_URL", "")
 
 # Misc
 THUMBNAIL = "https://cdn.discordapp.com/attachments/794989941690990602/972998353103233124/IMG_2177.jpg"
+SECRETS = json.loads(os.environ.get("SECRETS")) if "SECRETS" in os.environ else None

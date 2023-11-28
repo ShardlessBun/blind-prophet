@@ -41,7 +41,8 @@ class Dashboards(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if cat_channel := message.channel.category_id:
+        # Have to check for Category ID because ephemeral messages don't have them.
+        if hasattr(message.channel, "category_id") and (cat_channel := message.channel.category_id):
             async with self.bot.db.acquire() as conn:
                 dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(cat_channel, self.bot.db)
 

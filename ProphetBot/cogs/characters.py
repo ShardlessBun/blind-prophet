@@ -6,6 +6,7 @@ from typing import List
 from discord import SlashCommandGroup, Option, ApplicationContext, Member, Embed, Color
 from discord.ext import commands
 from ProphetBot.bot import BpBot
+from ProphetBot.constants import SECRETS
 from ProphetBot.helpers import remove_fledgling_role, get_character_quests, get_character, get_player_character_class, \
     create_logs, get_faction_roles, get_level_cap, get_or_create_guild, confirm, is_admin, get_active_character_from_char_id, \
     get_all_player_characters, get_character_from_char_id
@@ -150,6 +151,15 @@ class Character(commands.Cog):
             character = await get_character_quests(ctx.bot, character)
 
         await ctx.respond(embed=CharacterGetEmbed(character, class_ary, caps, ctx))
+
+    # @commands.slash_command(
+    #     name="secret",
+    #     description="Who's are you secret santa for?")
+    async def secret(self, ctx: ApplicationContext):
+        if s := SECRETS.get(str(ctx.author.id)):
+            return await ctx.respond(f"Your secret santa is {ctx.guild.get_member(s).mention}", ephemeral=True)
+        else:
+            return await ctx.respond(f"I can't find you on my naughty or nice list", ephemeral=True)
 
     @character_admin_commands.command(
         name="level",
