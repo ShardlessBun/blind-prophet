@@ -159,6 +159,32 @@ class Admin(commands.Cog):
 
         await ctx.send(str)
 
+    @commands.command("reactions")
+    @commands.check(is_owner)
+    async def reactions(self, ctx: ApplicationContext, message_id: int, channel_id: int):
+        if channel := ctx.guild.get_channel(channel_id):
+            if message := discord.utils.get(await channel.history(limit=100).flatten(), id=message_id):
+                reaction_info = []
+                for reaction in message.reactions:
+                    async for user in reaction.users():
+                        reaction_info.append((user.id, user.name))
+
+                output_text = "\n".join(f"{user_id},{username}" for user_id, username in reaction_info)
+
+                # Write the information to a file
+                file_name = f'reaction_info_{message_id}.txt'
+                with open(file_name, 'w') as file:
+                    file.write(output_text)
+
+                # Send the file as an attachment with a message
+                with open(file_name, 'rb') as file:
+                    file = discord.File(file)
+                    await ctx.send(f'Reaction information for message {message_id}:', file=file)
+
+                # Delete the file after sending
+                import os
+                os.remove(file_name)
+
     # --------------------------- #
     # Private Methods
     # --------------------------- #
