@@ -152,12 +152,12 @@ class Character(commands.Cog):
 
         await ctx.respond(embed=CharacterGetEmbed(character, class_ary, caps, ctx))
 
-    # @commands.slash_command(
-    #     name="secret",
-    #     description="Who's are you secret santa for?")
+    @commands.slash_command(
+        name="secret",
+        description="Who are you getting a gift for?")
     async def secret(self, ctx: ApplicationContext):
         if s := SECRETS.get(str(ctx.author.id)):
-            return await ctx.respond(f"Your secret santa is {ctx.guild.get_member(s).mention}", ephemeral=True)
+            return await ctx.respond(f"You're getting a gift for {ctx.guild.get_member(s).mention}\n\nNo one can see this message but you.", ephemeral=True)
         else:
             return await ctx.respond(f"I can't find you on my naughty or nice list", ephemeral=True)
 
