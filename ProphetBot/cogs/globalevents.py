@@ -193,7 +193,7 @@ class GlobalEvents(commands.Cog):
             messages = await channel.history(oldest_first=True, limit=600).flatten()
             await self.processMessages(g_event, channel.id, messages, players)
         elif forum:
-            for thread in ForumChannel.threads:
+            for thread in forum.threads:
                 messages = await channel.history(oldest_first=True, limi=600).flatten()
                 await self.processMessages(g_event, thread.id, messages, players)
 
