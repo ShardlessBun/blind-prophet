@@ -173,7 +173,8 @@ class GlobalEvents(commands.Cog):
         description="Scrapes a channel and adds the non-bot users to the global event"
     )
     async def gb_scrape(self, ctx: ApplicationContext,
-                        channel: Option(TextChannel, description="Channel to pull players from", required=True)):
+                        channel: Option(TextChannel, description="Channel to pull players from", required=False),
+                        forum: Option(ForumChannel, description="Forum to check", required=False)):
         """
         Scrapes over a channel adding non-bot players to the GlobalEvent and gathering statistics
 
@@ -188,8 +189,17 @@ class GlobalEvents(commands.Cog):
             return await ctx.respond(f'Error: No active global event on this server', ephemeral=True)
 
         players = await get_all_players(ctx.bot, ctx.guild_id)
-        messages = await channel.history(oldest_first=True, limit=600).flatten()
+        if channel:
+            messages = await channel.history(oldest_first=True, limit=600).flatten()
+            await self.processMessages(g_event, channel.id, messages, players)
+        elif forum:
+            for thread in ForumChannel.threads:
+                messages = await channel.history(oldest_first=True, limi=600).flatten()
+                await self.processMessages(g_event, thread.id, messages, players)
 
+        await ctx.respond(embed=GlobalEmbed(ctx, g_event, list(players.values())))
+
+    async def processMessages(self,g_event: GlobalEvent, channel_id, messages: list[Message], players):
         for msg in messages:
             if not msg.author.bot:
                 if msg.author.id in players:
@@ -210,19 +220,18 @@ class GlobalEvents(commands.Cog):
                         results = await conn.execute(add_global_player(player))
                         row = await results.first()
 
-                    player = GlobalPlayerSchema(ctx.bot.compendium).load(row)
+                    player = GlobalPlayerSchema(self.bot.compendium).load(row)
 
                 players[player.player_id] = player
 
-        if channel.id not in g_event.channels:
-            g_event.channels.append(channel.id)
+        if channel_id not in g_event.channels:
+            g_event.channels.append(channel_id)
             async with self.bot.db.acquire() as conn:
                 await conn.execute(update_global_event(g_event))
 
                 for p in players.keys():
                     await conn.execute(update_global_player(players[p]))
 
-        await ctx.respond(embed=GlobalEmbed(ctx, g_event, list(players.values())))
 
     @global_event_commands.command(
         name="player_update",
