@@ -194,7 +194,7 @@ class GlobalEvents(commands.Cog):
             await self.processMessages(g_event, channel.id, messages, players)
         elif forum:
             for thread in forum.threads:
-                messages = await thread.history(oldest_first=True, limi=600).flatten()
+                messages = await thread.history(oldest_first=True, limit=600).flatten()
                 await self.processMessages(g_event, thread.id, messages, players)
 
         await ctx.respond(embed=GlobalEmbed(ctx, g_event, list(players.values())))
