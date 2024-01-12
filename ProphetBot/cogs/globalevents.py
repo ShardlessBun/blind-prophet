@@ -212,8 +212,8 @@ class GlobalEvents(commands.Cog):
                 else:
                     player = GlobalPlayer(player_id=msg.author.id, guild_id=g_event.guild_id,
                                           modifier=g_event.base_mod, host=None,
-                                          gold=calc_amt(ctx.bot.compendium, g_event.base_gold, g_event.base_mod),
-                                          xp=calc_amt(ctx.bot.compendium, g_event.base_xp, g_event.base_mod),
+                                          gold=calc_amt(self.bot.compendium, g_event.base_gold, g_event.base_mod),
+                                          xp=calc_amt(self.bot.compendium, g_event.base_xp, g_event.base_mod),
                                           update=True, active=True, num_messages=1, channels=[msg.channel.id]
                                           )
                     async with self.bot.db.acquire() as conn:
