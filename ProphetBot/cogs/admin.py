@@ -167,9 +167,9 @@ class Admin(commands.Cog):
                 reaction_info = []
                 for reaction in message.reactions:
                     async for user in reaction.users():
-                        reaction_info.append((user.id, user.name))
+                        reaction_info.append((user.id, user.name, user.display_name))
 
-                output_text = "\n".join(f"{user_id},{username}" for user_id, username in reaction_info)
+                output_text = "\n".join(f"{user_id},{username},{display_name}" for user_id, username, display_name in reaction_info)
 
                 # Write the information to a file
                 file_name = f'reaction_info_{message_id}.txt'
