@@ -166,8 +166,9 @@ class Admin(commands.Cog):
                         message_id: int):
         if channel := ctx.guild.get_channel(channel_id):
             if message := discord.utils.get(await channel.history(limit=100).flatten(), id=message_id):
-                print(message)
-                await ctx.respond(f"Attachments: {message.attachments}")
+                print(message.attachments)
+                print(message.content)
+                await ctx.send(f"Attachments: {message.attachments}")
 
     @commands.command("reactions")
     @commands.check(is_owner)
