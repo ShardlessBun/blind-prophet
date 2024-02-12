@@ -332,7 +332,8 @@ class Dashboards(commands.Cog):
                 output.seek(0)
                 file = discord.File(fp=output, filename='image.png')
                 embed.set_image(url="attachment://image.png")
-                await original_message.attachments.clear()
+                if len(original_message.attachments) > 0: # Cleanup required at some times.
+                    await original_message.attachments.clear()
 
                 return await original_message.edit(file=file, embed=embed, content='')
 
