@@ -162,7 +162,7 @@ class Dashboards(commands.Cog):
     async def dashboard_shop_create(self, ctx: ApplicationContext):
         await ctx.defer()
 
-        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx)
+        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx.channel_id, ctx.bot.db)
 
         if dashboard is not None:
             return await ctx.respond(embed=ErrorEmbed(description="There is already a dashboard for this category. "
@@ -194,7 +194,7 @@ class Dashboards(commands.Cog):
     async def dashboard_guild_create(self, ctx: ApplicationContext):
         await ctx.defer()
 
-        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx)
+        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx.channel_id, ctx.bot.db)
 
         if dashboard is not None:
             return await ctx.respond(embed=ErrorEmbed(description="There is already a dashboard for this category. "
@@ -234,7 +234,7 @@ class Dashboards(commands.Cog):
         """
         await ctx.defer()
 
-        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx)
+        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx.channel_id, ctx.bot.db)
 
         if dashboard is None:
             return await ctx.respond(embed=ErrorEmbed(description=f"No dashboard found for this category"),
@@ -332,8 +332,7 @@ class Dashboards(commands.Cog):
                 output.seek(0)
                 file = discord.File(fp=output, filename='image.png')
                 embed.set_image(url="attachment://image.png")
-                if len(original_message.attachments) > 0: # Cleanup required at some times.
-                    await original_message.attachments.clear()
+                original_message.attachments.clear()
 
                 return await original_message.edit(file=file, embed=embed, content='')
 
