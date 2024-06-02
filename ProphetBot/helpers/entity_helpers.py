@@ -306,7 +306,7 @@ async def paginate(ctx: ApplicationContext, result: str):
         await ctx.send(f'`{partial_table}`')
         await paginate(ctx, '\n'.join(lines[46:]))
     else:
-        await ctx.send(f'`{result}`')
+        await ctx.send(f'```{result}```')
 
 
 async def get_shop(bot: Bot | Client, owner_id: int | None, guild_id: int | None, channel_id: int | None = None) -> Shop | None:
