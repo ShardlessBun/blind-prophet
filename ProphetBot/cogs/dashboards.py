@@ -1,4 +1,5 @@
-import asyncio
+import calendar
+from datetime import datetime, timezone
 import logging
 import io
 
@@ -17,6 +18,9 @@ from ProphetBot.models.embeds import ErrorEmbed, RpDashboardEmbed, ShopDashboard
 from ProphetBot.models.schemas import RefCategoryDashboardSchema, ShopSchema
 from ProphetBot.queries import insert_new_dashboard, get_dashboards, delete_dashboard, update_dashboard, get_shops
 from timeit import default_timer as timer
+from texttable import Texttable
+
+from ProphetBot.queries.view_queries import get_level_distribution_query
 
 log = logging.getLogger(__name__)
 
@@ -220,6 +224,38 @@ class Dashboards(commands.Cog):
         await self.update_dashboard(dashboard)
 
     @dashboard_commands.command(
+        name="level_create",
+        description="Creates a dashboard showing level distribution"
+    )
+    async def dashboard_guild_create(self, ctx: ApplicationContext):
+        await ctx.defer()
+
+        dashboard: RefCategoryDashboard = await get_dashboard_from_category_channel_id(ctx.channel_id, ctx.bot.db)
+
+        if dashboard is not None:
+            return await ctx.respond(embed=ErrorEmbed(description="There is already a dashboard for this category. "
+                                                                  "Delete that before creating another"),
+                                     ephemeral=True)
+
+        # Create post with dummy text in it
+        interaction = await ctx.respond("Fetching dashboard data. This may take a moment")
+        msg: Message = await ctx.channel.fetch_message(interaction.id)
+        await msg.pin(reason=f"Shop dashboard created by {ctx.author.name}")
+
+        dType = ctx.bot.compendium.get_object("c_dashboard_type", "LDIST")
+
+        dashboard = RefCategoryDashboard(category_channel_id=ctx.channel.category.id,
+                                         dashboard_post_channel_id=ctx.channel_id,
+                                         dashboard_post_id=msg.id,
+                                         excluded_channel_ids=[],
+                                         dashboard_type=dType.id)
+
+        async with ctx.bot.db.acquire() as conn:
+            await conn.execute(insert_new_dashboard(dashboard))
+
+        await self.update_dashboard(dashboard)
+
+    @dashboard_commands.command(
         name="rp_exclude",
         description="Add a channel to the exclusions list"
     )
@@ -335,6 +371,24 @@ class Dashboards(commands.Cog):
                 original_message.attachments.clear()
 
                 return await original_message.edit(file=file, embed=embed, content='')
+            
+        elif dType is not None and dType.value.upper() == "LDIST":
+            data = []
+            async with self.bot.db.acquire() as conn:
+                async for row in conn.execute(get_level_distribution_query()):
+                    result = dict(row)
+                    data.append(result['Level'], result['#'])
+
+            dist_table = Texttable()
+            dist_table.set_cols_align(['l', 'r'])
+            dist_table.set_cols_valign(['m', 'm'])
+            dist_table.set_cols_width([10, 5])
+            dist_table.header(['Level', '#'])
+            dist_table.add_rows(data, header=False)
+
+            footer = f"Last Updates - <t:{calendar.timegm(datetime.now(timezone.utc).timetuple())}:F>"
+
+            return await original_message.edit(content=f"```\n{dist_table.draw()}```{footer}", embed=None)
 
     # --------------------------- #
     # Tasks
