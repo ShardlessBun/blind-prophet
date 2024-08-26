@@ -377,7 +377,7 @@ class Dashboards(commands.Cog):
             async with self.bot.db.acquire() as conn:
                 async for row in conn.execute(get_level_distribution_query()):
                     result = dict(row)
-                    data.append(result['Level'], result['#'])
+                    data.append([result['Level'], result['#']])
 
             dist_table = Texttable()
             dist_table.set_cols_align(['l', 'r'])
