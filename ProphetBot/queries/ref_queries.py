@@ -26,7 +26,7 @@ def insert_new_dashboard(dashboard: RefCategoryDashboard) -> TableClause:
 def update_dashboard(dashboard: RefCategoryDashboard):
     return ref_category_dashboard_table.update() \
         .where(
-        ref_category_dashboard_table.c.category_channel_id == dashboard.category_channel_id
+        ref_category_dashboard_table.c.dashboard_post_id == dashboard.dashboard_post_id
     ) \
         .values(
         category_channel_id=dashboard.category_channel_id,
@@ -43,7 +43,7 @@ def get_dashboards() -> FromClause:
 
 def delete_dashboard(dashboard: RefCategoryDashboard) -> TableClause:
     return ref_category_dashboard_table.delete().where(
-        ref_category_dashboard_table.c.category_channel_id == dashboard.category_channel_id
+        ref_category_dashboard_table.c.dashboard_post_id == dashboard.dashboard_post_id
     )
 
 
