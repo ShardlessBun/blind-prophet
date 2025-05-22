@@ -361,10 +361,7 @@ class BlacksmithItemEmbed(Embed):
         else:
             self.description += f"**Attunement Required:** No\n"
 
-        if item.seeking_only:
-            self.description += f"**Seeking:** Yes\n"
-        else:
-            self.description += f"**Seeking:** No\n"
+        self.description += f"**Seeking Only?: ** {'Yes' if item.seeking_only else 'No'}"
 
         if item.notes is not None:
             self.add_field(name="Notes", value=item.notes, inline=False)
@@ -385,10 +382,7 @@ class MagicItemEmbed(Embed):
         else:
             self.description += f"**Attunement Required:** No\n"
 
-        if item.seeking_only:
-            self.description += f"**Seeking:** Yes\n"
-        else:
-            self.description += f"**Seeking:** No\n"
+        self.description += f"**Seeking Only?: ** {'Yes' if item.seeking_only else 'No'}"
 
         if item.notes is not None:
             self.add_field(name="Notes", value=item.notes, inline=False)
@@ -410,10 +404,7 @@ class ConsumableItemEmbed(Embed):
         else:
             self.description += f"**Attunement Required:** No\n"
 
-        if item.seeking_only:
-            self.description += f"**Seeking:** Yes\n"
-        else:
-            self.description += f"**Seeking:** No\n"
+        self.description += f"**Seeking Only?: ** {'Yes' if item.seeking_only else 'No'}"
 
         if item.notes is not None:
             self.add_field(name="Notes", value=item.notes, inline=False)
